@@ -1,0 +1,11 @@
+{
+  "name": "iparty",
+  "version": "1.0.0",
+  "description": "Family party game with points-to-cash conversion",
+  "scripts": {
+    "start": "echo 'Starting iParty...' && echo 'Server: http://localhost:3001' && echo 'Client: http://localhost:5173' && echo '' && echo 'Open TWO terminal windows:' && echo '1. Run: cd server && npm start' && echo '2. Run: cd client && npm run dev'"
+  },
+  "keywords": ["game", "party", "family", "christmas"],
+  "author": "",
+  "license": "MIT"
+}
