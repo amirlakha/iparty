@@ -21,13 +21,15 @@ An **engaging, story-driven party game** for kids aged 7-17 where they embark on
 - [x] Network connectivity working
 - [x] Basic scoring system
 - [x] Points-to-cash conversion system
+- [x] Game redesign and planning
+- [x] Character artwork (Santa, Elf, Reindeer)
+- [x] Background artwork (5 workshop scenes)
 
 ### 🚧 In Progress
-- [ ] Game redesign and planning (CURRENT)
+- [ ] UI elements and icons (CURRENT)
 
 ### ❌ Needs Work
 - [ ] Story-driven narrative framework
-- [ ] Real artwork and visual assets
 - [ ] Automatic objective scoring (no host needed)
 - [ ] Engaging UI/UX with animations
 - [ ] Cloud deployment (remove IP address complexity)
@@ -292,10 +294,11 @@ Santa's magical workshop has broken! The toy-making machines, reindeer stable, g
 - [ ] Review and approve plan
 
 ### Phase 2: Asset Creation (3-4 hours)
-- [ ] Generate AI images
+- [x] Generate character images (Santa, Elf, Reindeer)
+- [x] Generate background images (5 workshop scenes)
+- [ ] Generate UI elements (logo, icons, map)
 - [ ] Create/find sound effects
 - [ ] Optimize images for web
-- [ ] Create sprite sheets if needed
 - [ ] Test assets in browser
 
 ### Phase 3: Core Game Loop (4-5 hours)
@@ -380,6 +383,12 @@ Technical: Digital illustration, 1920x1080px, PNG with transparency
 - **Decision:** Cloud hosting (Vercel + Railway)
 - **Reason:** Eliminate IP address complexity
 - **Impact:** Simpler setup on Christmas day
+
+### Dec 23, 2024 - Background Style Discovery
+- **Decision:** Use gradient backgrounds with subtle silhouettes (15-30% opacity) instead of detailed scenes
+- **Reason:** Detailed backgrounds too busy for UI; plain gradients lack theming
+- **Impact:** Found perfect balance - atmospheric theming without overwhelming game interface
+- **Result:** All 5 backgrounds completed in consistent style
 
 ---
 
