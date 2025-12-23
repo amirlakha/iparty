@@ -26,15 +26,39 @@
 - Reindeer count in victory scene (settled on 6, acceptable vs 8 traditional)
 - Plan to delete HostScreen.jsx and create autonomous CoordinatorScreen
 
-**Next Session Priorities:**
-1. Copy plan file to project (IMPLEMENTATION_PLAN.md)
-2. Start Week 1 Day 1: Core Architecture
+**Session Continued - Testing & Deployment Discussion:**
+- Testing Strategy Confirmed:
+  - Multi-window browser testing (Coordinator + multiple Player windows)
+  - Use Incognito windows or different browser profiles
+  - Test locally first, final validation on real devices
+  - Deploy to cloud early for real-world testing
+- Cloud Deployment Reminder:
+  - Frontend: Vercel (free tier)
+  - Backend: Railway (free $5 credit)
+  - Deploy before final testing (Week 3 or sooner)
+  - Eliminates IP address complexity for Christmas Day
+- Timeline Clarification:
+  - **CRITICAL:** 36 hours total (Dec 23 evening + all day Dec 24)
+  - "Week 1/2/3" labels are just task organization, not calendar weeks
+  - 20-25 hours of work compressed into 36 calendar hours
+- Scope Clarification:
+  - **FULL SCOPE - NO CUTS**
+  - ✅ Full polish, all artwork integration, animations, glass-morphism
+  - ✅ Story-driven, visually engaging experience
+  - ✅ ALL mini-games from plan (6 MVP + advanced games)
+  - ✅ Drawing game, Connect 4, Charades - everything
+  - **Goal:** Complete, polished, fun, engaging game as designed
+
+**Next Immediate Actions:**
+1. ✅ Create CLAUDE.md for session continuity
+2. Start Core Architecture (NOW):
    - Create christmasStory.js
    - Build storyFlowEngine.js
    - Update server game state model
-3. Commit progress regularly
+3. Test incrementally with multi-window setup
+4. Commit progress regularly
 
-**Blockers:** None
+**Blockers:** None - Ready to build
 
 ---
 
