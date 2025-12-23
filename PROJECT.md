@@ -1,8 +1,8 @@
 # iParty - Christmas Adventure Game
 
-**Status:** Planning & Redesign Phase
+**Status:** Implementation Ready - Full Rebuild Planned
 **Target Date:** Christmas Day (Dec 25, 2024)
-**Last Updated:** Dec 23, 2024
+**Last Updated:** Dec 23, 2024 (Evening)
 
 ---
 
@@ -27,7 +27,9 @@ An **engaging, story-driven party game** for kids aged 7-17 where they embark on
 - [x] UI elements and icons (logo, star, map, celebration, victory)
 
 ### 🚧 In Progress
-- [ ] Core game loop implementation (CURRENT)
+- [ ] Full rebuild implementation (CURRENT)
+- [ ] See detailed plan: `IMPLEMENTATION_PLAN.md`
+- [ ] Track progress: `PROGRESS.md`
 
 ### ❌ Needs Work
 - [ ] Story-driven narrative framework
@@ -399,6 +401,21 @@ Technical: Digital illustration, 1920x1080px, PNG with transparency
 - **Tool:** ChatGPT Plus (DALL-E 3)
 - **Style:** Consistent children's book illustration style, ages 7-17
 - **Ready:** All artwork complete, ready to integrate into game
+
+### Dec 23, 2024 - Implementation Plan Approved
+- **Decision:** Full rebuild with story-driven autonomous game flow
+- **Approach:** Delete HostScreen, create autonomous CoordinatorScreen
+- **Story:** "Save Christmas Village" - 5 workshop sections × 3 challenges
+- **Scoring:** Fully automatic server-side validation (no host needed)
+- **Mini-Games:** 6 MVP games for launch (Math, Trivia, Spelling, True/False, Pattern, Memory)
+- **Timeline:** 20-25 hours total implementation
+- **Plan File:** `IMPLEMENTATION_PLAN.md` (full technical roadmap)
+- **Progress File:** `PROGRESS.md` (session-by-session tracking)
+- **Architecture:**
+  - ~20 new files (screens, components, mini-games, data)
+  - ~500 lines modified (server auto-scoring, client updates)
+  - ~600 lines deleted (old HostScreen, roundGenerator)
+- **Next:** Begin foundation implementation (story engine, validators, question pools)
 
 ---
 
