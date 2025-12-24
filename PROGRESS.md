@@ -289,12 +289,48 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 - Browser refresh needed to see all visual updates
 - All 7 game states now have polished, modern design
 
+**Session Continued - Timer Implementation:**
+
+**Completed:**
+- ✅ **Created CircularTimer component**
+  - Circular progress ring with countdown number
+  - Color changes: Green (60-20s) → Yellow (20-10s) → Red (10-0s)
+  - Pulses and glows when <10s remaining
+  - Fully responsive with clamp() sizing (small/medium/large)
+  - Auto-resets on state change via timerKey
+
+- ✅ **Created ProgressBar component**
+  - Subtle horizontal progress bar for story/transition screens
+  - Smooth animation filling over duration
+  - Configurable colors (blue/green/purple/yellow)
+  - Minimal height (4-8px) - doesn't obstruct content
+
+- ✅ **Integrated timers into CoordinatorScreen**
+  - CHALLENGE_ACTIVE: Circular timer in header (60s countdown)
+  - INTRODUCTION: Progress bar at bottom (8s)
+  - SECTION_INTRO: Progress bar at bottom (8s)
+  - CHALLENGE_RESULTS: Progress bar at bottom (5s)
+  - SECTION_COMPLETE: Progress bar at bottom (5s)
+  - MAP_TRANSITION: Progress bar at bottom (3s)
+
+**Timer Placement:**
+- Challenge timer: Center of gradient header, doesn't obscure questions
+- Progress bars: Bottom edge, completely out of content way
+- All use timerKey to reset on state changes
+
+**Bug Fix - Star Display:**
+- ✅ Fixed SECTION_COMPLETE star display - now shows actual stars earned (1-3) instead of always showing 3
+- ✅ Removed hardcoded "You earned 3 Magic Stars" text from all section narratives
+- Stars now conditionally display based on `sectionStars` value
+
 **Next Priorities:**
-1. Test visual updates in browser (refresh to see changes)
-2. Mini-game implementation (need 5 more games: Trivia, True/False, Spelling, Pattern, Memory)
-3. Full end-to-end testing
-4. Cloud deployment
-5. Final polish and bug fixes
+1. ✅ Test timers in browser (refresh to see timers in action)
+2. ✅ Test star display shows correct number when <3 stars
+3. Replace emoji stars with star-icon.png on SECTION_COMPLETE screen
+4. Mini-game implementation (need 5 more games: Trivia, True/False, Spelling, Pattern, Memory)
+5. Full end-to-end testing
+6. Cloud deployment
+7. Final polish and bug fixes
 
 ---
 

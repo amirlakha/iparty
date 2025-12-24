@@ -56,8 +56,7 @@ export const christmasStory = {
         title: "Toy Machine Repaired!",
         narrative: [
           "Amazing! The toy machine is working again!",
-          "Toys are flowing down the conveyor belt!",
-          "You earned 3 Magic Stars ⭐⭐⭐"
+          "Toys are flowing down the conveyor belt!"
         ],
         duration: 5000 // 5 seconds
       }
@@ -90,8 +89,7 @@ export const christmasStory = {
         title: "Reindeer Ready to Fly!",
         narrative: [
           "Wonderful! The reindeer are glowing with magical energy!",
-          "Their antlers are shining bright!",
-          "You earned 3 more Magic Stars ⭐⭐⭐"
+          "Their antlers are shining bright!"
         ],
         duration: 5000
       }
@@ -124,8 +122,7 @@ export const christmasStory = {
         title: "Wrapping Station Fixed!",
         narrative: [
           "Perfect! Ribbons and bows are flying everywhere!",
-          "All the presents are beautifully wrapped!",
-          "You earned 3 more Magic Stars ⭐⭐⭐"
+          "All the presents are beautifully wrapped!"
         ],
         duration: 5000
       }
@@ -158,8 +155,7 @@ export const christmasStory = {
         title: "Cookies Ready!",
         narrative: [
           "Delicious! The smell of fresh cookies fills the air!",
-          "Santa has all the energy he needs!",
-          "You earned 3 more Magic Stars ⭐⭐⭐"
+          "Santa has all the energy he needs!"
         ],
         duration: 5000
       }

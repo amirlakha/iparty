@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import christmasStory from '../data/christmasStory';
 import { QRCodeSVG } from 'qrcode.react';
+import CircularTimer from '../components/CircularTimer';
+import ProgressBar from '../components/ProgressBar';
 
 function CoordinatorScreen() {
   const location = useLocation();
@@ -19,6 +21,7 @@ function CoordinatorScreen() {
   const [submissions, setSubmissions] = useState([]);
   const [results, setResults] = useState([]);
   const [sectionStars, setSectionStars] = useState(0);
+  const [timerKey, setTimerKey] = useState(0); // Force timer reset on state change
 
   useEffect(() => {
     if (!socket || !roomCode) return;
@@ -27,6 +30,7 @@ function CoordinatorScreen() {
       setGameState(data.state);
       setCurrentRound(data.round || 0);
       setCurrentSection(data.section || 0);
+      setTimerKey(prev => prev + 1); // Reset timer on state change
 
       // Reset submissions on new challenge
       if (data.state === 'CHALLENGE_ACTIVE') {
@@ -321,6 +325,10 @@ function CoordinatorScreen() {
               </div>
             </div>
           </div>
+          {/* Progress bar at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 px-8">
+            <ProgressBar key={`intro-${timerKey}`} duration={8} color="purple" />
+          </div>
         </div>
       </div>
     );
@@ -420,6 +428,10 @@ function CoordinatorScreen() {
               </div>
             </div>
           </div>
+          {/* Progress bar at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 px-8">
+            <ProgressBar key={`section-intro-${timerKey}`} duration={8} color="blue" />
+          </div>
         </div>
       </div>
     );
@@ -448,6 +460,7 @@ function CoordinatorScreen() {
                   <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
                     {section?.emoji} {section?.name} • Round {currentRound}
                   </div>
+                  <CircularTimer key={`challenge-${timerKey}`} duration={60} size="medium" />
                   <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
                     Section {currentSection}/5
                   </div>
@@ -669,6 +682,10 @@ function CoordinatorScreen() {
               </div>
             </div>
           </div>
+          {/* Progress bar at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 px-8">
+            <ProgressBar key={`results-${timerKey}`} duration={5} color="green" />
+          </div>
         </div>
       </div>
     );
@@ -722,9 +739,9 @@ function CoordinatorScreen() {
             </h1>
 
             <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(0.5rem, 2vh, 1.5rem)'}}>
-              <span className="animate-bounce text-yellow-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0s'}}>⭐</span>
-              <span className="animate-bounce text-green-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.1s'}}>⭐</span>
-              <span className="animate-bounce text-blue-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.2s'}}>⭐</span>
+              {sectionStars >= 1 && <span className="animate-bounce text-yellow-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0s'}}>⭐</span>}
+              {sectionStars >= 2 && <span className="animate-bounce text-green-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.1s'}}>⭐</span>}
+              {sectionStars >= 3 && <span className="animate-bounce text-blue-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.2s'}}>⭐</span>}
             </div>
 
             {/* Glassmorphism panel */}
@@ -780,6 +797,10 @@ function CoordinatorScreen() {
                 </div>
               </div>
             </div>
+          </div>
+          {/* Progress bar at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 px-8">
+            <ProgressBar key={`section-complete-${timerKey}`} duration={5} color="yellow" />
           </div>
         </div>
       </div>
@@ -875,6 +896,10 @@ function CoordinatorScreen() {
                 </div>
               </div>
             </div>
+          </div>
+          {/* Progress bar at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 px-8">
+            <ProgressBar key={`map-${timerKey}`} duration={3} color="blue" />
           </div>
         </div>
       </div>
