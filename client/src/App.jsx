@@ -3,6 +3,7 @@ import Home from './pages/Home';
 import Lobby from './pages/Lobby';
 import CoordinatorScreen from './pages/CoordinatorScreen';
 import PlayerStoryScreen from './pages/PlayerStoryScreen';
+import ScreenPreview from './pages/ScreenPreview';
 import './App.css';
 
 function App() {
@@ -14,6 +15,8 @@ function App() {
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/coordinator" element={<CoordinatorScreen />} />
           <Route path="/play" element={<PlayerStoryScreen />} />
+          <Route path="/preview" element={<ScreenPreview />} />
+          <Route path="/preview/:screen" element={<ScreenPreview />} />
         </Routes>
       </div>
     </Router>
