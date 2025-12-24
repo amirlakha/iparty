@@ -196,17 +196,17 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
   - NEW: Each question awards 1 star if ANY player gets it correct (1 star per question, 3 max)
 - **CHANGED:** Point calculation
   - OLD: Base 100 + speed bonus 0-100 (no placement)
-  - NEW: Placement-based (1st=50, 2nd=30, 3rd=20, 4th+=10 points)
+  - NEW: Placement-based (1st=30, 2nd=20, 3rd+=10 points)
 - **ADDED:** Section bonus/penalty system
-  - 3 stars achieved: Everyone gets +50 bonus points
+  - 3 stars achieved: Everyone gets +30 bonus points
   - <3 stars failed: Remove ALL section points from all players (for retry)
 - **ADDED:** Section point tracking requirement (track points per section for rollback)
 
 **Next Session Priorities:**
 1. ~~Implement new star calculation (1 star per question if anyone correct)~~
-2. ~~Implement placement-based scoring (50/30/20/10)~~
+2. ~~Implement placement-based scoring (30/20/10)~~
 3. ~~Add section point tracking to game state (sectionPoints per player)~~
-4. ~~Implement section bonus (+50) and penalty (rollback section points)~~
+4. ~~Implement section bonus (+30) and penalty (rollback section points)~~
 5. ~~Test new scoring system end-to-end~~
 
 **Session Continued - Scoring System Implementation:**
@@ -411,6 +411,24 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 - ✅ INTRODUCTION progress bar now fills correctly over 12 seconds
 - ✅ All progress bars working on all screens
 - ✅ Autonomous flow advancing correctly with proper timing
+
+**Session Continued - Scoring Adjustment:**
+
+**Completed:**
+- ✅ **Adjusted scoring values for better balance**
+  - Changed placement points: 1st (50→30), 2nd (30→20), 3rd (20→10), 4th+ (10→10)
+  - Changed section bonus: +50 → +30 points
+  - Updated documentation to reflect new values
+
+**Rationale:**
+- Lower individual question points make section bonuses more meaningful
+- More balanced competition (smaller gaps between placements)
+- Section teamwork bonus (+30) now represents ~1 extra question win
+
+**Files Modified:**
+- `server/utils/answerValidator.js` - Updated calculatePoints() function
+- `server/index.js` - Updated section bonus from 50 to 30
+- `PROGRESS.md` - Updated scoring documentation
 
 ---
 

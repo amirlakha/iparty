@@ -74,12 +74,12 @@ function handleSectionComplete(roomCode, io) {
 
   // Apply bonus or penalty based on stars
   if (starResult.passed) {
-    // PASSED: +50 bonus to everyone
-    console.log(`[${roomCode}] Section ${sectionId} PASSED - awarding +50 bonus to all players`);
+    // PASSED: +30 bonus to everyone
+    console.log(`[${roomCode}] Section ${sectionId} PASSED - awarding +30 bonus to all players`);
     game.players.forEach(player => {
       const oldScore = game.scores[player.id] || 0;
-      game.scores[player.id] = oldScore + 50;
-      console.log(`[${roomCode}] ${player.name}: ${oldScore} → ${game.scores[player.id]} (+50 bonus)`);
+      game.scores[player.id] = oldScore + 30;
+      console.log(`[${roomCode}] ${player.name}: ${oldScore} → ${game.scores[player.id]} (+30 bonus)`);
     });
   } else {
     // FAILED: Remove all section points from all players

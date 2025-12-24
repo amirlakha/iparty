@@ -211,10 +211,9 @@ function validateArray(playerAnswer, correctAnswer, options = {}) {
 
 /**
  * Calculate points for an answer - PLACEMENT-BASED SCORING
- * - 1st correct: 50 points
- * - 2nd correct: 30 points
- * - 3rd correct: 20 points
- * - 4th+ correct: 10 points each
+ * - 1st correct: 30 points
+ * - 2nd correct: 20 points
+ * - 3rd+ correct: 10 points each
  * - Wrong/timeout: 0 points
  *
  * @param {boolean} isCorrect - Whether answer was correct
@@ -233,10 +232,9 @@ function calculatePoints(isCorrect, placement = null) {
   }
 
   // Placement-based points
-  if (placement === 1) return 50;  // 1st place
-  if (placement === 2) return 30;  // 2nd place
-  if (placement === 3) return 20;  // 3rd place
-  return 10;                       // 4th+ place
+  if (placement === 1) return 30;  // 1st place
+  if (placement === 2) return 20;  // 2nd place
+  return 10;                       // 3rd+ place
 }
 
 /**
