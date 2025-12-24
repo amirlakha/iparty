@@ -236,38 +236,88 @@ function CoordinatorScreen() {
   if (gameState === 'INTRODUCTION') {
     return (
       <div
-        className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
+        className="fixed inset-0 w-screen h-screen overflow-hidden"
         style={{
           backgroundImage: 'url(/src/assets/images/home-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
       >
-        {/* Darker overlay for story readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-40 pointer-events-none"></div>
+        <style>{`
+          @keyframes circle {
+            0% { transform: translate(0, -20px); }
+            12.5% { transform: translate(14px, -14px); }
+            25% { transform: translate(20px, 0); }
+            37.5% { transform: translate(14px, 14px); }
+            50% { transform: translate(0, 20px); }
+            62.5% { transform: translate(-14px, 14px); }
+            75% { transform: translate(-20px, 0); }
+            87.5% { transform: translate(-14px, -14px); }
+            100% { transform: translate(0, -20px); }
+          }
+          .animate-circle {
+            animation: circle 5s linear infinite;
+          }
+        `}</style>
+        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
+          <div className="w-full max-w-7xl flex flex-col items-center" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
+            {/* Santa Character with circle + wiggle animation */}
+            <div className="animate-circle mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
+              <img
+                src="/src/assets/images/santa-character.png"
+                alt="Santa"
+                className="animate-wiggle object-contain drop-shadow-2xl"
+                style={{width: '100%', height: '100%'}}
+              />
+            </div>
 
-        <div className="relative z-10 max-w-5xl text-center px-12">
-          {/* Santa Character Image - Larger and more prominent */}
-          <img
-            src="/src/assets/images/santa-character.png"
-            alt="Santa"
-            className="w-80 h-80 mx-auto mb-8 animate-bounce object-contain drop-shadow-2xl"
-          />
+            {/* Title with Strong Outline */}
+            <h1 className="font-black text-yellow-300 drop-shadow-2xl text-center px-4 flex-shrink-0"
+                style={{
+                  fontSize: 'clamp(1.5rem, 5vh, 5rem)',
+                  WebkitTextStroke: '2px #991b1b',
+                  paintOrder: 'stroke fill',
+                  textShadow: '3px 3px 0px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.8)'
+                }}>
+              {christmasStory.title}
+            </h1>
 
-          <h1 className="text-8xl font-black text-white mb-12 drop-shadow-2xl">
-            {christmasStory.title}
-          </h1>
-
-          <div className="bg-white bg-opacity-95 rounded-3xl p-12 shadow-2xl border-4 border-red-500">
-            {christmasStory.introduction.narrative.map((line, i) => (
-              <p key={i} className="text-3xl text-gray-800 font-semibold mb-6 leading-relaxed">
-                {line}
-              </p>
-            ))}
-
-            <div className="mt-12 bg-gradient-to-r from-red-600 to-green-600 rounded-2xl py-6 px-8 inline-block shadow-xl">
-              <div className="text-5xl font-black text-white animate-pulse">
-                Get Ready to Save Christmas!
+            {/* Story Card with Glassmorphism */}
+            <div className="relative w-full flex-1 min-h-0 overflow-y-auto">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col justify-center border border-white/40"
+                   style={{
+                     padding: 'clamp(1.5rem, 4vh, 3.5rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10">
+                  {christmasStory.introduction.narrative.map((line, i) => (
+                    <p key={i} className="text-gray-900 font-black leading-relaxed" style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.75rem, 2vh, 1.75rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                      {line}
+                    </p>
+                  ))}
+                  <div style={{marginTop: 'clamp(1.5rem, 3vh, 3.5rem)'}}>
+                    <button className="relative w-full bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 hover:from-yellow-500 hover:via-red-600 hover:to-pink-600 rounded-full shadow-2xl border-4 border-white transition-all hover:scale-105 active:scale-95 overflow-hidden"
+                      style={{padding: 'clamp(1.25rem, 3vh, 2.25rem) clamp(1.5rem, 4vh, 3rem)'}}>
+                      <div className="absolute inset-0 bg-white opacity-0 hover:opacity-20 transition-opacity"></div>
+                      <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1.25rem, 3.5vh, 4rem)'}}>
+                        🚀 LET'S GO! 🚀
+                      </div>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -283,41 +333,90 @@ function CoordinatorScreen() {
 
     return (
       <div
-        className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
+        className="fixed inset-0 w-screen h-screen overflow-hidden"
         style={{
           backgroundImage: `url(${getBackgroundImage()})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
       >
-        {/* Medium overlay for readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-30 pointer-events-none"></div>
+        <style>{`
+          @keyframes circle {
+            0% { transform: translate(0, -20px); }
+            12.5% { transform: translate(14px, -14px); }
+            25% { transform: translate(20px, 0); }
+            37.5% { transform: translate(14px, 14px); }
+            50% { transform: translate(0, 20px); }
+            62.5% { transform: translate(-14px, 14px); }
+            75% { transform: translate(-20px, 0); }
+            87.5% { transform: translate(-14px, -14px); }
+            100% { transform: translate(0, -20px); }
+          }
+          .animate-circle {
+            animation: circle 5s linear infinite;
+          }
+        `}</style>
+        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
+          <div className="w-full max-w-7xl flex flex-col items-center" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
+            {/* Character with Circle + Wiggle */}
+            <div className="animate-circle mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
+              <img
+                src={getCharacterImage()}
+                alt="Character"
+                className="animate-wiggle object-contain drop-shadow-2xl"
+                style={{width: '100%', height: '100%'}}
+              />
+            </div>
 
-        <div className="max-w-5xl text-center relative z-10 px-12">
-          {/* Character Image - Larger */}
-          <img
-            src={getCharacterImage()}
-            alt="Character"
-            className="w-72 h-72 mx-auto mb-8 object-contain drop-shadow-2xl animate-bounce"
-          />
+            {/* Title with Strong Outline */}
+            <h1 className="font-black text-yellow-300 drop-shadow-2xl text-center px-4 flex-shrink-0"
+                style={{
+                  fontSize: 'clamp(1.5rem, 5vh, 5rem)',
+                  WebkitTextStroke: '2px #1e40af',
+                  paintOrder: 'stroke fill',
+                  textShadow: '3px 3px 0px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.8)'
+                }}>
+              {section.emoji} {section.name}
+            </h1>
 
-          <h1 className="text-8xl font-black text-white mb-10 drop-shadow-2xl">
-            {section.emoji} {section.name}
-          </h1>
-
-          <div className="bg-white bg-opacity-95 rounded-3xl p-12 shadow-2xl border-4 border-blue-500">
-            <h2 className="text-5xl font-black text-blue-600 mb-8">
-              {section.storyIntro.title}
-            </h2>
-            {section.storyIntro.narrative.map((line, i) => (
-              <p key={i} className="text-3xl text-gray-800 font-semibold mb-6 leading-relaxed">
-                {line}
-              </p>
-            ))}
-
-            <div className="mt-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl py-4 px-8 inline-block shadow-lg">
-              <div className="text-3xl font-black text-white">
-                Section {currentSection} of 5 • Need ⭐⭐⭐ to pass
+            {/* Story Card with Glassmorphism */}
+            <div className="relative w-full flex-1 min-h-0 overflow-y-auto">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col justify-center border border-white/40"
+                   style={{
+                     padding: 'clamp(1.5rem, 4vh, 3.5rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10">
+                  <h2 className="font-black text-purple-600" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                    {section.storyIntro.title}
+                  </h2>
+                  {section.storyIntro.narrative.map((line, i) => (
+                    <p key={i} className="text-gray-900 font-black leading-relaxed" style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.75rem, 2vh, 1.75rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                      {line}
+                    </p>
+                  ))}
+                  <div style={{marginTop: 'clamp(1.5rem, 3vh, 3.5rem)'}}>
+                    <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-full inline-block shadow-2xl border-4 border-white"
+                      style={{padding: 'clamp(1rem, 2.5vh, 1.75rem) clamp(1.5rem, 4vh, 3rem)'}}>
+                      <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1rem, 2.5vh, 3rem)'}}>
+                        Section {currentSection}/5 • ⭐⭐⭐ Required!
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -339,78 +438,112 @@ function CoordinatorScreen() {
           backgroundPosition: 'center'
         }}
       >
-        {/* Medium overlay for readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-35 pointer-events-none"></div>
-
-        <div className="relative z-10 flex-1 flex flex-col p-8">
-          {/* Header */}
-          <div className="bg-white rounded-2xl p-6 mb-6 shadow-xl border-4 border-purple-500">
-            <div className="flex justify-between items-center">
-              <div className="text-3xl font-black text-purple-600">
-                {section?.emoji} {section?.name} • Round {currentRound}
-              </div>
-              <div className="text-3xl font-black text-gray-700">
-                Section {currentSection} of 5
-              </div>
-            </div>
-          </div>
-
-          {/* Main Question Card */}
-          <div className="bg-white bg-opacity-95 rounded-3xl p-16 mb-6 shadow-2xl border-4 border-blue-500 flex-1 flex flex-col justify-center">
-            <div className="text-center">
-              {currentChallenge ? (
-                <>
-                  <div className="text-9xl mb-8">{currentChallenge.emoji || '🎮'}</div>
-                  <h2 className="text-7xl font-black text-gray-900 mb-12 leading-tight">
-                    {currentChallenge.question}
-                  </h2>
-
-                  {currentChallenge.options && (
-                    <div className="grid grid-cols-2 gap-6 max-w-5xl mx-auto">
-                      {currentChallenge.options.map((option, i) => {
-                        const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'];
-                        return (
-                          <div
-                            key={i}
-                            className={`${colors[i]} rounded-2xl p-8 border-4 border-white shadow-xl`}
-                          >
-                            <div className="text-5xl font-black text-white">{option}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-5xl font-bold text-gray-700">Loading challenge...</div>
-              )}
-            </div>
-          </div>
-
-          {/* Submissions Progress */}
-          <div className="bg-white bg-opacity-95 rounded-2xl p-6 shadow-xl border-4 border-green-500">
-            <h3 className="text-3xl font-bold text-gray-800 mb-4 text-center">
-              Player Submissions ({submissions.length}/{players.length})
-            </h3>
-            <div className="grid grid-cols-6 gap-3">
-              {players.map((player) => {
-                const hasSubmitted = submissions.includes(player.id);
-                return (
-                  <div
-                    key={player.id}
-                    className={`rounded-xl p-3 text-center border-4 ${
-                      hasSubmitted
-                        ? 'bg-green-500 border-green-300'
-                        : 'bg-gray-300 border-gray-400'
-                    }`}
-                  >
-                    <div className="text-4xl mb-1">
-                      {hasSubmitted ? '✅' : '⏳'}
-                    </div>
-                    <div className="text-lg font-bold text-white">{player.name}</div>
+        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
+          <div className="w-full max-w-7xl flex flex-col" style={{maxHeight: '96vh', gap: 'clamp(1.5rem, 3vh, 3rem)'}}>
+            {/* Header with Gradient Border - flex-shrink-0 */}
+            <div className="relative bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 rounded-2xl shadow-2xl flex-shrink-0" style={{padding: 'clamp(0.125rem, 0.25vh, 0.5rem)'}}>
+              <div className="bg-gray-900 rounded-2xl" style={{padding: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
+                <div className="flex justify-between items-center gap-2">
+                  <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
+                    {section?.emoji} {section?.name} • Round {currentRound}
                   </div>
-                );
-              })}
+                  <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
+                    Section {currentSection}/5
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Challenge Area with Glassmorphism - flex-1 */}
+            <div className="relative flex-1 min-h-0">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col justify-center overflow-y-auto border border-white/40"
+                   style={{
+                     padding: 'clamp(1rem, 3vh, 4rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10 text-center">
+                  {currentChallenge ? (
+                    <>
+                      <div style={{fontSize: 'clamp(2rem, 8vh, 6rem)', marginBottom: 'clamp(0.5rem, 1vh, 2rem)'}}>{currentChallenge.emoji || '🎮'}</div>
+                      <h2 className="font-black text-gray-900 leading-tight px-2"
+                          style={{
+                            fontSize: 'clamp(1.25rem, 4vh, 4rem)',
+                            marginBottom: 'clamp(1rem, 2vh, 3rem)',
+                            textShadow: '0 2px 4px rgba(255,255,255,0.9)'
+                          }}>
+                        {currentChallenge.question}
+                      </h2>
+                      {currentChallenge.options && (
+                        <div className="grid grid-cols-2 max-w-5xl mx-auto" style={{gap: 'clamp(0.5rem, 1vh, 1.5rem)'}}>
+                          {currentChallenge.options.map((option, i) => {
+                            const gradients = [
+                              'from-red-500 via-red-600 to-red-700',
+                              'from-blue-500 via-blue-600 to-blue-700',
+                              'from-green-500 via-green-600 to-green-700',
+                              'from-yellow-400 via-yellow-500 to-yellow-600'
+                            ];
+                            return (
+                              <div
+                                key={i}
+                                className={`bg-gradient-to-br ${gradients[i]} rounded-2xl border-white shadow-2xl hover:scale-110 transition-transform`}
+                                style={{
+                                  padding: 'clamp(0.75rem, 2vh, 2rem)',
+                                  borderWidth: 'clamp(2px, 0.5vh, 6px)'
+                                }}
+                              >
+                                <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)'}}>{option}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="font-bold text-gray-900" style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)'}}>Loading challenge...</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Player Submissions - Compact - flex-shrink-0 */}
+            <div className="bg-gray-900 bg-opacity-90 rounded-2xl shadow-xl border-yellow-400 flex-shrink-0" style={{padding: 'clamp(0.5rem, 1.5vh, 1.5rem)', borderWidth: 'clamp(2px, 0.5vh, 6px)'}}>
+              <div className="grid grid-cols-4 md:grid-cols-6" style={{gap: 'clamp(0.25rem, 0.5vh, 0.75rem)'}}>
+                {players.map((player, idx) => {
+                  const hasSubmitted = submissions.includes(player.id);
+                  return (
+                    <div
+                      key={player.id}
+                      className={`rounded-xl text-center ${
+                        hasSubmitted
+                          ? 'bg-green-500 border-green-300'
+                          : 'bg-gray-600 border-gray-500'
+                      }`}
+                      style={{
+                        padding: 'clamp(0.25rem, 0.75vh, 0.75rem)',
+                        borderWidth: 'clamp(2px, 0.4vh, 4px)'
+                      }}
+                    >
+                      <div style={{fontSize: 'clamp(1rem, 2.5vh, 2.5rem)'}}>
+                        {hasSubmitted ? '✅' : '⏳'}
+                      </div>
+                      <div className="font-bold text-white truncate" style={{fontSize: 'clamp(0.625rem, 1vh, 1rem)'}}>{player.name}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -431,78 +564,109 @@ function CoordinatorScreen() {
           backgroundPosition: 'center'
         }}
       >
-        {/* Medium overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-35 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
+          <div className="w-full max-w-7xl flex flex-col" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1vh, 1.5rem)'}}>
+            {/* Title */}
+            <h1 className="font-black text-yellow-300 text-center drop-shadow-2xl flex-shrink-0"
+                style={{
+                  fontSize: 'clamp(1.5rem, 4.5vh, 4rem)',
+                  WebkitTextStroke: '2px #991b1b',
+                  paintOrder: 'stroke fill',
+                  textShadow: '3px 3px 0px rgba(0,0,0,0.5)'
+                }}>
+              📊 Round {currentRound} Results
+            </h1>
 
-        <div className="relative z-10 flex-1 flex flex-col p-8 overflow-y-auto">
-          <h1 className="text-7xl font-black text-white text-center mb-8 drop-shadow-2xl">
-            📊 Round {currentRound} Results
-          </h1>
+            {/* Single unified results panel */}
+            <div className="relative flex-1 min-h-0 overflow-y-auto">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full border border-white/40"
+                   style={{
+                     padding: 'clamp(1.5rem, 3vh, 3rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10 h-full flex flex-col" style={{gap: 'clamp(1.5rem, 3vh, 3rem)'}}>
 
-          {/* Results Table */}
-          <div className="bg-white bg-opacity-95 rounded-3xl p-8 mb-6 shadow-2xl border-4 border-purple-500">
-            <div className="space-y-3">
-              {results.map((result) => {
-                const player = players.find(p => p.id === result.playerId);
-                if (!player) return null;
+                  {/* Round Results */}
+                  <div style={{display: 'flex', flexDirection: 'column', gap: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                    {results.map((result) => {
+                      const player = players.find(p => p.id === result.playerId);
+                      if (!player) return null;
+                      return (
+                        <div
+                          key={result.playerId}
+                          className={`rounded-2xl flex justify-between items-center shadow-lg ${
+                            result.isCorrect
+                              ? 'bg-gradient-to-r from-green-400 to-green-500'
+                              : 'bg-gradient-to-r from-red-400 to-red-500'
+                          }`}
+                          style={{padding: 'clamp(0.75rem, 2vh, 2rem)'}}
+                        >
+                          <div className="flex items-center" style={{gap: 'clamp(0.75rem, 1.5vh, 2rem)'}}>
+                            <div style={{fontSize: 'clamp(2rem, 4vh, 5rem)'}}>
+                              {result.isCorrect ? '✅' : '❌'}
+                            </div>
+                            <div>
+                              <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1rem, 2.5vh, 2.5rem)'}}>{player.name}</div>
+                              <div className="text-white font-bold opacity-90" style={{fontSize: 'clamp(0.875rem, 1.75vh, 1.5rem)'}}>"{result.answer || 'No answer'}"</div>
+                            </div>
+                          </div>
+                          <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1.5rem, 4vh, 5rem)'}}>
+                            +{result.points}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
 
-                return (
-                  <div
-                    key={result.playerId}
-                    className={`rounded-2xl p-6 flex justify-between items-center border-4 ${
-                      result.isCorrect
-                        ? 'bg-green-500 border-green-300'
-                        : 'bg-red-500 border-red-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="text-6xl">
-                        {result.isCorrect ? '✅' : '❌'}
-                      </div>
-                      <div>
-                        <div className="text-3xl font-bold text-white">{player.name}</div>
-                        <div className="text-xl text-white text-opacity-90">{result.answer || 'No answer'}</div>
-                      </div>
-                    </div>
-                    <div className="text-5xl font-black text-white">
-                      +{result.points} pts
+                  {/* Divider */}
+                  <div className="border-t-2 border-white/40"></div>
+
+                  {/* Top Scores */}
+                  <div>
+                    <h2 className="font-black text-yellow-300 text-center drop-shadow-xl" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
+                      🏆 TOP SCORES 🏆
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4" style={{gap: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>
+                      {[...players]
+                        .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
+                        .map((player, index) => (
+                          <div
+                            key={player.id}
+                            className={`rounded-2xl text-center shadow-xl border-4 ${
+                              index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 border-yellow-600' :
+                              index === 1 ? 'bg-gradient-to-br from-gray-200 to-gray-400 border-gray-500' :
+                              index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-500 border-orange-600' :
+                              'bg-gradient-to-br from-blue-300 to-blue-500 border-blue-600'
+                            }`}
+                            style={{padding: 'clamp(0.75rem, 1.5vh, 2rem)'}}
+                          >
+                            <div style={{fontSize: 'clamp(2rem, 4vh, 4rem)', marginBottom: 'clamp(0.25rem, 0.5vh, 0.75rem)'}}>
+                              {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯'}
+                            </div>
+                            <div className="font-black text-gray-900 truncate" style={{fontSize: 'clamp(0.875rem, 1.75vh, 1.75rem)'}}>{player.name}</div>
+                            <div className="font-black text-gray-900" style={{fontSize: 'clamp(1.25rem, 2.5vh, 3rem)'}}>
+                              {scores[player.id] || 0}
+                            </div>
+                          </div>
+                        ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Current Scoreboard */}
-          <div className="bg-white bg-opacity-95 rounded-3xl p-8 shadow-2xl border-4 border-yellow-500">
-            <h2 className="text-5xl font-black text-gray-800 mb-6 text-center">
-              🏆 Current Scores
-            </h2>
-            <div className="grid grid-cols-4 gap-4">
-              {[...players]
-                .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
-                .map((player, index) => (
-                  <div
-                    key={player.id}
-                    className={`rounded-xl p-6 text-center border-4 ${
-                      index === 0
-                        ? 'bg-yellow-400 border-yellow-600'
-                        : index === 1
-                        ? 'bg-gray-300 border-gray-500'
-                        : index === 2
-                        ? 'bg-orange-400 border-orange-600'
-                        : 'bg-blue-400 border-blue-600'
-                    }`}
-                  >
-                    <div className="text-5xl mb-2">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯'}
-                    </div>
-                    <div className="text-2xl font-bold text-white">{player.name}</div>
-                    <div className="text-4xl font-black text-white">
-                      {scores[player.id] || 0}
-                    </div>
-                  </div>
-                ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -516,59 +680,106 @@ function CoordinatorScreen() {
     if (!section) return null;
 
     return (
-      <div
-        className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
-        style={{
-          backgroundImage: `url(${getBackgroundImage()})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        {/* Celebration overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/30 via-green-500/30 to-blue-500/30 pointer-events-none"></div>
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden"
+        style={{backgroundImage: `url(${getBackgroundImage()})`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <style>{`
+          @keyframes starburst {
+            0% {
+              transform: scale(0.7) rotate(0deg);
+              opacity: 0.4;
+            }
+            50% {
+              transform: scale(1.15) rotate(180deg);
+              opacity: 1;
+            }
+            100% {
+              transform: scale(0.7) rotate(360deg);
+              opacity: 0.4;
+            }
+          }
+          .animate-starburst {
+            animation: starburst 4s ease-in-out infinite;
+          }
+        `}</style>
+        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
+          <div className="w-full max-w-7xl text-center flex flex-col items-center" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
+            {/* Celebration burst with scale, fade, rotate animation */}
+            <div className="mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
+              <img src="/src/assets/images/celebration-burst.png" alt="Celebration"
+                className="animate-starburst object-contain drop-shadow-2xl"
+                style={{width: '100%', height: '100%'}} />
+            </div>
 
-        <div className="relative z-10 max-w-5xl text-center px-12">
-          {/* Celebration burst image */}
-          <img
-            src="/src/assets/images/celebration-burst.png"
-            alt="Celebration"
-            className="w-64 h-64 mx-auto mb-6 animate-pulse"
-          />
+            <h1 className="font-black text-yellow-300 drop-shadow-2xl flex-shrink-0"
+              style={{
+                fontSize: 'clamp(1.5rem, 5vh, 5rem)',
+                WebkitTextStroke: '2px #15803d',
+                paintOrder: 'stroke fill',
+                textShadow: '3px 3px 0px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.8)'
+              }}>
+              SECTION COMPLETE! 🎯
+            </h1>
 
-          <h1 className="text-9xl font-black text-white mb-8 drop-shadow-2xl">
-            Section Complete!
-          </h1>
+            <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(0.5rem, 2vh, 1.5rem)'}}>
+              <span className="animate-bounce text-yellow-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0s'}}>⭐</span>
+              <span className="animate-bounce text-green-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.1s'}}>⭐</span>
+              <span className="animate-bounce text-blue-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.2s'}}>⭐</span>
+            </div>
 
-          {/* Stars Display - Large and prominent */}
-          <div className="text-9xl mb-8 animate-bounce">
-            {sectionStars >= 3 ? '⭐⭐⭐' : sectionStars === 2 ? '⭐⭐' : '⭐'}
-          </div>
+            {/* Glassmorphism panel */}
+            <div className="relative w-full flex-1 min-h-0 overflow-y-auto">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col justify-center border border-white/40"
+                   style={{
+                     padding: 'clamp(1.5rem, 4vh, 3.5rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10">
+                  <h2 className="font-black text-green-600" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                    {section.successMessage.title}
+                  </h2>
+                  {section.successMessage.narrative.map((line, i) => (
+                    <p key={i} className="text-gray-900 font-black leading-relaxed" style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.75rem, 2vh, 1.75rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                      {line}
+                    </p>
+                  ))}
 
-          <div className="bg-white bg-opacity-95 rounded-3xl p-12 shadow-2xl border-4 border-green-500">
-            <h2 className="text-5xl font-black text-green-600 mb-8">
-              {section.successMessage.title}
-            </h2>
-            {section.successMessage.narrative.map((line, i) => (
-              <p key={i} className="text-3xl text-gray-800 font-semibold mb-6 leading-relaxed">
-                {line}
-              </p>
-            ))}
+                  {sectionStars < 3 && (
+                    <div style={{marginTop: 'clamp(1.5rem, 3vh, 3.5rem)'}}>
+                      <div className="bg-gradient-to-r from-red-400 via-red-500 to-red-600 rounded-full inline-block shadow-xl mx-auto animate-pulse"
+                           style={{padding: 'clamp(0.75rem, 2vh, 2rem) clamp(1.5rem, 4vh, 4rem)', border: '4px solid white'}}>
+                        <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1rem, 2.5vh, 2.5rem)'}}>
+                          NEED 3 STARS! RETRYING... 🔄
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-            {sectionStars < 3 && (
-              <div className="mt-8 bg-red-500 rounded-2xl py-4 px-8 inline-block">
-                <div className="text-4xl font-black text-white animate-pulse">
-                  Need 3 stars to continue! Retrying section...
+                  {sectionStars >= 3 && (
+                    <div style={{marginTop: 'clamp(1.5rem, 3vh, 3.5rem)'}}>
+                      <div className="bg-gradient-to-r from-orange-400 via-pink-500 to-blue-500 rounded-full inline-block shadow-xl mx-auto"
+                           style={{padding: 'clamp(0.75rem, 2vh, 2rem) clamp(1.5rem, 4vh, 4rem)', border: '4px solid white'}}>
+                        <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1rem, 2.5vh, 2.5rem)'}}>
+                          NEXT SECTION LOADING... 🚀
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-
-            {sectionStars >= 3 && (
-              <div className="mt-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl py-4 px-8 inline-block">
-                <div className="text-4xl font-black text-white">
-                  Moving to next section! 🎉
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -578,47 +789,91 @@ function CoordinatorScreen() {
   // MAP_TRANSITION STATE
   if (gameState === 'MAP_TRANSITION') {
     return (
-      <div
-        className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
-        style={{
-          backgroundImage: 'url(/src/assets/images/home-background.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        {/* Dark overlay for contrast */}
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden"
+        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
+          <div className="w-full max-w-7xl flex flex-col" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
+            {/* Title */}
+            <h1 className="font-black text-yellow-300 drop-shadow-2xl text-center px-4 flex-shrink-0"
+              style={{
+                fontSize: 'clamp(1.5rem, 5vh, 5rem)',
+                WebkitTextStroke: '2px #1e40af',
+                paintOrder: 'stroke fill',
+                textShadow: '3px 3px 0px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.8)'
+              }}>
+              🗺️ CHRISTMAS VILLAGE JOURNEY
+            </h1>
 
-        <div className="relative z-10 max-w-6xl text-center px-12">
-          <h1 className="text-8xl font-black text-white mb-12 drop-shadow-2xl">
-            🗺️ Journey Through Christmas Village
-          </h1>
-
-          {/* Village Map */}
-          <div className="bg-white bg-opacity-95 rounded-3xl p-8 mb-8 shadow-2xl border-4 border-blue-500">
-            <img
-              src="/src/assets/images/village-map.png"
-              alt="Village Map"
-              className="w-full max-w-5xl mx-auto rounded-2xl shadow-lg"
-            />
-          </div>
-
-          {/* Progress Indicator */}
-          <div className="bg-white bg-opacity-95 rounded-2xl p-8 shadow-2xl border-4 border-yellow-500">
-            <div className="text-5xl font-black text-gray-800 mb-6">
-              Progress: {currentSection} of 5 Sections Complete
-            </div>
-            <div className="flex justify-center gap-6 text-8xl">
-              {[1, 2, 3, 4, 5].map(section => (
-                <div
-                  key={section}
-                  className={`transform transition-all ${
-                    section <= currentSection ? 'scale-100 opacity-100' : 'scale-75 opacity-30'
-                  }`}
-                >
-                  ⭐
+            {/* Map with Glassmorphism */}
+            <div className="relative flex-1 min-h-0">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full border border-white/40"
+                   style={{
+                     padding: 'clamp(1rem, 2vh, 2rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10 h-full">
+                  <img src="/src/assets/images/village-map.png" alt="Village Map"
+                    className="w-full h-full object-contain rounded-2xl" />
                 </div>
-              ))}
+              </div>
+            </div>
+
+            {/* Progress with Glassmorphism */}
+            <div className="relative flex-shrink-0">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl border border-white/40"
+                   style={{
+                     padding: 'clamp(1rem, 2vh, 2rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10">
+                  <div className="font-black text-purple-600 text-center"
+                    style={{
+                      fontSize: 'clamp(1.25rem, 3vh, 3rem)',
+                      marginBottom: 'clamp(0.5rem, 1.5vh, 1.5rem)',
+                      textShadow: '0 2px 4px rgba(255,255,255,0.9)'
+                    }}>
+                    PROGRESS: {currentSection}/5 SECTIONS 🎯
+                  </div>
+                  <div className="flex justify-center items-center"
+                    style={{gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
+                    {[1, 2, 3, 4, 5].map(section => (
+                      <div key={section}
+                        className={`transform transition-all ${section <= currentSection ? 'scale-110 opacity-100' : 'scale-75 opacity-30'}`}
+                        style={{
+                          fontSize: 'clamp(2rem, 5vh, 5rem)',
+                          filter: section <= currentSection ? 'drop-shadow(0 0 10px gold)' : 'none'
+                        }}>
+                        ⭐
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -629,69 +884,163 @@ function CoordinatorScreen() {
   // VICTORY STATE
   if (gameState === 'VICTORY') {
     return (
-      <div
-        className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
-        style={{
-          backgroundImage: 'url(/src/assets/images/victory-scene.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        {/* Medium overlay for readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-40 pointer-events-none"></div>
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden"
+        style={{backgroundImage: 'url(/src/assets/images/victory-scene.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <style>{`
+          @keyframes circle {
+            0% { transform: translate(0, -20px); }
+            12.5% { transform: translate(14px, -14px); }
+            25% { transform: translate(20px, 0); }
+            37.5% { transform: translate(14px, 14px); }
+            50% { transform: translate(0, 20px); }
+            62.5% { transform: translate(-14px, 14px); }
+            75% { transform: translate(-20px, 0); }
+            87.5% { transform: translate(-14px, -14px); }
+            100% { transform: translate(0, -20px); }
+          }
+          .animate-circle {
+            animation: circle 5s linear infinite;
+          }
+          @keyframes fadeInUp {
+            0% {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes pulseOpacity {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.6;
+            }
+          }
+          .fade-in-narrative {
+            opacity: 0;
+            animation:
+              fadeInUp 0.8s ease-out 2s forwards,
+              pulseOpacity 4s ease-in-out 2.8s infinite;
+          }
+          .fade-in-champions {
+            opacity: 0;
+            animation:
+              fadeInUp 0.8s ease-out 2.5s forwards,
+              pulseOpacity 4s ease-in-out 3.3s infinite;
+          }
+        `}</style>
+        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
+          <div className="w-full max-w-7xl flex flex-col" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
+            {/* Characters with circle + wiggle animation */}
+            <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(1rem, 2vh, 3rem)'}}>
+              <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)'}}>
+                <img src="/src/assets/images/santa-character.png" alt="Santa"
+                  className="object-contain animate-wiggle drop-shadow-2xl"
+                  style={{width: '100%', height: '100%'}} />
+              </div>
+              <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)', animationDelay: '0.2s'}}>
+                <img src="/src/assets/images/elf-character.png" alt="Elf"
+                  className="object-contain animate-wiggle drop-shadow-2xl"
+                  style={{width: '100%', height: '100%'}} />
+              </div>
+              <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)', animationDelay: '0.4s'}}>
+                <img src="/src/assets/images/reindeer-character.png" alt="Reindeer"
+                  className="object-contain animate-wiggle drop-shadow-2xl"
+                  style={{width: '100%', height: '100%'}} />
+              </div>
+            </div>
 
-        <div className="relative z-10 max-w-6xl text-center px-12">
-          {/* All Three Characters - Larger */}
-          <div className="flex justify-center gap-12 mb-10">
-            <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-48 h-48 object-contain animate-bounce drop-shadow-2xl" style={{ animationDelay: '0s' }} />
-            <img src="/src/assets/images/elf-character.png" alt="Elf" className="w-48 h-48 object-contain animate-bounce drop-shadow-2xl" style={{ animationDelay: '0.2s' }} />
-            <img src="/src/assets/images/reindeer-character.png" alt="Reindeer" className="w-48 h-48 object-contain animate-bounce drop-shadow-2xl" style={{ animationDelay: '0.4s' }} />
-          </div>
+            {/* Title */}
+            <h1 className="font-black text-yellow-300 drop-shadow-2xl text-center flex-shrink-0"
+              style={{
+                fontSize: 'clamp(1.5rem, 5vh, 5rem)',
+                WebkitTextStroke: '2px #15803d',
+                paintOrder: 'stroke fill',
+                textShadow: '3px 3px 0px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.8)'
+              }}>
+              CHRISTMAS IS SAVED! 🎯
+            </h1>
 
-          <h1 className="text-9xl font-black text-white mb-12 drop-shadow-2xl">
-            CHRISTMAS IS SAVED!
-          </h1>
+            {/* Narrative with Glassmorphism */}
+            <div className="relative flex-shrink-0 fade-in-narrative">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl border border-white/40"
+                   style={{
+                     padding: 'clamp(1.5rem, 3vh, 3rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10">
+                  {christmasStory.victory.narrative.map((line, i) => (
+                    <p key={i} className="text-gray-900 font-black leading-relaxed" style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.75rem, 2vh, 1.75rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-          <div className="bg-white bg-opacity-95 rounded-3xl p-12 mb-8 shadow-2xl border-4 border-green-500">
-            {christmasStory.victory.narrative.map((line, i) => (
-              <p key={i} className="text-4xl text-gray-800 font-semibold mb-6 leading-relaxed">
-                {line}
-              </p>
-            ))}
-          </div>
-
-          {/* Final Scoreboard */}
-          <div className="bg-white bg-opacity-95 rounded-3xl p-8 shadow-2xl border-4 border-yellow-500">
-            <h2 className="text-6xl font-black text-gray-800 mb-8">
-              🏆 Final Champions
-            </h2>
-            <div className="space-y-4">
-              {[...players]
-                .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
-                .map((player, index) => (
-                  <div
-                    key={player.id}
-                    className={`rounded-2xl p-6 flex justify-between items-center border-4 ${
-                      index === 0
-                        ? 'bg-yellow-400 border-yellow-600 transform scale-105'
-                        : index === 1
-                        ? 'bg-gray-300 border-gray-500'
-                        : index === 2
-                        ? 'bg-orange-400 border-orange-600'
-                        : 'bg-blue-400 border-blue-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="text-7xl">
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯'}
+            {/* Champions with Glassmorphism */}
+            <div className="relative flex-1 min-h-0 fade-in-champions">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col border border-white/40"
+                   style={{
+                     padding: 'clamp(1.5rem, 2vh, 2rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2),
+                       0 0 100px rgba(255, 255, 255, 0.1)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
+                <div className="relative z-10 h-full flex flex-col">
+                  <h2 className="font-black text-purple-600 text-center flex-shrink-0" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)', marginBottom: 'clamp(0.5rem, 1vh, 1.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                    🏆 FINAL CHAMPIONS 🏆
+                  </h2>
+                  <div className="flex-1 flex flex-col justify-center" style={{gap: 'clamp(0.25rem, 0.75vh, 0.75rem)'}}>
+                    {[...players].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0)).map((player, index) => (
+                      <div key={player.id}
+                        className={`rounded-2xl flex justify-between items-center shadow-lg ${
+                          index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
+                          index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                          index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
+                          'bg-gradient-to-r from-blue-400 to-blue-500'
+                        }`}
+                        style={{padding: 'clamp(0.5rem, 1vh, 1rem)', border: '3px solid white'}}>
+                        <div className="flex items-center" style={{gap: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                          <div style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)'}}>
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯'}
+                          </div>
+                          <div className="font-bold text-white drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>{player.name}</div>
+                        </div>
+                        <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1rem, 2.5vh, 3rem)'}}>
+                          {scores[player.id] || 0}
+                        </div>
                       </div>
-                      <div className="text-4xl font-bold text-white">{player.name}</div>
-                    </div>
-                    <div className="text-6xl font-black text-white">
-                      {scores[player.id] || 0} pts
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
