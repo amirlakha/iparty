@@ -181,12 +181,95 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 
 ---
 
+### Dec 24, 2024 - Late Night Session
+
+**Completed:**
+- ✅ Core architecture implemented (christmasStory.js, storyFlowEngine.js, flowCoordinator.js already existed)
+- ✅ Auto-advance timers working
+- ✅ Answer validation system complete
+- ✅ Section retry mechanism implemented
+- ✅ Fixed event mismatch bug (section-complete vs section-stars)
+
+**Scoring System Redesign (Documentation Updated):**
+- **CHANGED:** Star calculation logic
+  - OLD: 80%+ of total team answers = 3 stars
+  - NEW: Each question awards 1 star if ANY player gets it correct (1 star per question, 3 max)
+- **CHANGED:** Point calculation
+  - OLD: Base 100 + speed bonus 0-100 (no placement)
+  - NEW: Placement-based (1st=50, 2nd=30, 3rd=20, 4th+=10 points)
+- **ADDED:** Section bonus/penalty system
+  - 3 stars achieved: Everyone gets +50 bonus points
+  - <3 stars failed: Remove ALL section points from all players (for retry)
+- **ADDED:** Section point tracking requirement (track points per section for rollback)
+
+**Next Session Priorities:**
+1. ~~Implement new star calculation (1 star per question if anyone correct)~~
+2. ~~Implement placement-based scoring (50/30/20/10)~~
+3. ~~Add section point tracking to game state (sectionPoints per player)~~
+4. ~~Implement section bonus (+50) and penalty (rollback section points)~~
+5. ~~Test new scoring system end-to-end~~
+
+**Session Continued - Scoring System Implementation:**
+
+**Completed:**
+- ✅ **New star calculation implemented** (server/utils/answerValidator.js)
+  - Each question awards 1 star if ANY player answers correctly
+  - calculateSectionStars now evaluates per-question team performance
+  - 3 questions = 3 possible stars, need all 3 to pass
+- ✅ **Placement-based scoring implemented** (server/utils/answerValidator.js)
+  - Changed from speed-bonus to placement-based points
+  - 1st place: 50 points, 2nd: 30 points, 3rd: 20 points, 4th+: 10 points
+  - calculatePlacements ranks by fastest correct answer time
+- ✅ **Section point tracking added** (server/index.js)
+  - New game state property: sectionPoints (tracks points per player per section)
+  - Format: `{ playerId: { sectionId: points } }`
+  - Enables rollback on section failure
+- ✅ **Section bonus/penalty system implemented** (server/index.js)
+  - 3 stars: +50 bonus to all players
+  - <3 stars: Remove all section points from all players (then retry section)
+  - Server logs show point changes for debugging
+- ✅ **Event synchronization fixed**
+  - Added scores-updated broadcast to ensure all clients update
+  - CoordinatorScreen and PlayerStoryScreen both listen for score changes
+- ✅ **Comprehensive logging added to PlayerStoryScreen**
+  - Component mount logging with version number
+  - Game state change logging
+  - Challenge received/submitted logging
+  - Results logging (correct/wrong, points, placement)
+  - Score update logging (with reason: section-bonus, section-penalty)
+
+**Files Modified:**
+- `server/utils/answerValidator.js` - Star and point calculation logic
+- `server/index.js` - Section completion handling, point tracking, bonus/penalty
+- `client/src/pages/CoordinatorScreen.jsx` - Added scores-updated listener
+- `client/src/pages/PlayerStoryScreen.jsx` - Added scores-updated listener and comprehensive logging
+
+**Testing:**
+- ✅ Scoring system tested and confirmed working
+- ✅ Bonus and penalty applying correctly
+- ✅ Player screens updating with new scores
+
+**Known Issues:**
+- None - system working as designed
+
+---
+
+**Next Session Priorities:**
+1. Continue with mini-game implementation (6 MVP games needed)
+2. Transfer prototype designs to actual CoordinatorScreen states
+3. Test full game flow end-to-end
+4. Polish and bug fixes
+5. Consider cloud deployment for final testing
+
+---
+
 ## Notes for Future Sessions
 
 **Current Context:**
-- Running low on context, updated PROJECT.md before ending session
+- Core architecture complete (autonomous flow, star system, scoring)
+- Screen prototypes complete (7 screens with glassmorphism design)
+- Scoring system fully implemented and tested
 - Implementation plan in project: `IMPLEMENTATION_PLAN.md`
-- Todo list created but doesn't persist between sessions
 
 **Document Structure:**
 - `README.md` = User-facing documentation for Christmas Day
@@ -211,4 +294,4 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 
 ---
 
-Last Updated: Dec 24, 2024 (Evening)
+Last Updated: Dec 24, 2024 (Late Night - Scoring System Complete)

@@ -4,7 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const FlowCoordinator = require('./utils/flowCoordinator');
 const { GameState } = require('./utils/storyData');
-const { gradeSubmissions } = require('./utils/answerValidator');
+const { gradeSubmissions, calculateSectionStars } = require('./utils/answerValidator');
 const { generateChallenge } = require('./utils/challengeGenerator');
 
 const app = express();
@@ -54,6 +54,110 @@ function handleChallengeActive(roomCode, io) {
   });
 }
 
+// Handle section completion - calculate stars and determine if retry needed
+function handleSectionComplete(roomCode, io) {
+  const game = games.get(roomCode);
+  const flowCoordinator = flowCoordinators.get(roomCode);
+
+  if (!game || !flowCoordinator) return;
+
+  const numPlayers = game.players.length;
+  const sectionId = flowCoordinator.currentSection;
+
+  // Calculate stars for this section
+  const starResult = calculateSectionStars(game.sectionResults, numPlayers);
+
+  // Store stars for this section
+  game.sectionStars[sectionId] = starResult;
+
+  console.log(`[${roomCode}] Section ${sectionId} complete: ${starResult.stars} stars - Questions: ${starResult.questionsCorrect.join(', ')}`);
+
+  // Apply bonus or penalty based on stars
+  if (starResult.passed) {
+    // PASSED: +50 bonus to everyone
+    console.log(`[${roomCode}] Section ${sectionId} PASSED - awarding +50 bonus to all players`);
+    game.players.forEach(player => {
+      const oldScore = game.scores[player.id] || 0;
+      game.scores[player.id] = oldScore + 50;
+      console.log(`[${roomCode}] ${player.name}: ${oldScore} → ${game.scores[player.id]} (+50 bonus)`);
+    });
+  } else {
+    // FAILED: Remove all section points from all players
+    console.log(`[${roomCode}] Section ${sectionId} FAILED - removing section points from all players`);
+    game.players.forEach(player => {
+      const sectionPointsEarned = game.sectionPoints[player.id]?.[sectionId] || 0;
+      game.scores[player.id] = (game.scores[player.id] || 0) - sectionPointsEarned;
+      console.log(`[${roomCode}] Removed ${sectionPointsEarned} points from ${player.name}`);
+    });
+  }
+
+  // Broadcast section results with stars AND updated scores
+  io.to(roomCode).emit('section-stars', {
+    sectionId,
+    stars: starResult.stars,
+    passed: starResult.passed,
+    questionsCorrect: starResult.questionsCorrect,
+    scores: game.scores // Send updated scores with bonus/penalty applied
+  });
+
+  // Also broadcast score update separately to ensure UI updates
+  io.to(roomCode).emit('scores-updated', {
+    scores: game.scores,
+    reason: starResult.passed ? 'section-bonus' : 'section-penalty'
+  });
+
+  // If section failed (< 3 stars), schedule retry
+  if (!starResult.passed) {
+    console.log(`[${roomCode}] Section ${sectionId} FAILED - scheduling retry`);
+
+    // Wait for section complete screen to show, then retry
+    setTimeout(() => {
+      retrySection(roomCode, io, sectionId);
+    }, 5000); // Match timing.sectionSuccess
+  }
+  // Otherwise, flow coordinator will auto-advance to MAP_TRANSITION or VICTORY
+}
+
+// Retry a section (reset to first challenge of that section)
+function retrySection(roomCode, io) {
+  const game = games.get(roomCode);
+  const flowCoordinator = flowCoordinators.get(roomCode);
+
+  if (!game || !flowCoordinator) return;
+
+  const sectionId = flowCoordinator.currentSection;
+
+  console.log(`[${roomCode}] Retrying section ${sectionId}`);
+
+  // Clear section results and reset section points for retry
+  game.sectionResults = [];
+
+  // Reset section points to 0 for this section (they'll earn them again)
+  game.players.forEach(player => {
+    if (game.sectionPoints[player.id]) {
+      game.sectionPoints[player.id][sectionId] = 0;
+    }
+  });
+
+  // Calculate first round of this section
+  const firstRound = (sectionId - 1) * 3 + 1;
+
+  // Reset to first round of section
+  flowCoordinator.currentRound = firstRound - 1; // Will be incremented by nextRound
+
+  // Clear auto-advance timer (we're manually controlling flow here)
+  flowCoordinator.clearAutoAdvance();
+
+  // Broadcast retry notification
+  io.to(roomCode).emit('section-retry', {
+    sectionId,
+    message: 'Let\'s try that section again!'
+  });
+
+  // Transition to section intro
+  flowCoordinator.nextRound(io);
+}
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
@@ -69,19 +173,36 @@ io.on('connection', (socket) => {
       gameState: GameState.LOBBY,
       currentRound: 0,
       currentSection: 0,
-      scores: {},
+      scores: {},           // Total scores per player
+      sectionPoints: {},    // Points earned per player per section: { playerId: { 1: 80, 2: 120, ... } }
       playerAges: {},
       currentChallenge: null,
-      submissions: []
+      submissions: [],
+      sectionResults: [],   // Track results for current section (up to 3 challenges)
+      sectionStars: {}      // Track stars earned per section
     };
 
     games.set(roomCode, game);
 
     // Create flow coordinator for this game with state change callback
     const flowCoordinator = new FlowCoordinator(roomCode, (roomCode, newState, io) => {
+      const game = games.get(roomCode);
+      if (!game) return;
+
       // Generate challenge when entering CHALLENGE_ACTIVE state
       if (newState === GameState.CHALLENGE_ACTIVE) {
         handleChallengeActive(roomCode, io);
+      }
+
+      // Clear section results when starting a new section
+      if (newState === GameState.SECTION_INTRO) {
+        game.sectionResults = [];
+        console.log(`[${roomCode}] Starting new section ${flowCoordinator.currentSection}, cleared results`);
+      }
+
+      // Calculate stars when section completes
+      if (newState === GameState.SECTION_COMPLETE) {
+        handleSectionComplete(roomCode, io);
       }
     });
     flowCoordinators.set(roomCode, flowCoordinator);
@@ -114,6 +235,7 @@ io.on('connection', (socket) => {
 
     game.players.push(player);
     game.scores[socket.id] = 0;
+    game.sectionPoints[socket.id] = {}; // Initialize section points tracking
     game.playerAges[socket.id] = player.age;
 
     socket.join(roomCode);
@@ -295,9 +417,22 @@ function gradeAndAdvance(roomCode, io) {
   // Grade all submissions
   const results = gradeSubmissions(submissions, game.currentChallenge);
 
-  // Update scores
+  // Store results for section star calculation
+  game.sectionResults.push(...results);
+
+  // Update scores and track section points
+  const sectionId = flowCoordinator.currentSection;
   results.forEach(result => {
-    game.scores[result.playerId] = (game.scores[result.playerId] || 0) + result.points;
+    const playerId = result.playerId;
+
+    // Add to total score
+    game.scores[playerId] = (game.scores[playerId] || 0) + result.points;
+
+    // Track section points (for potential rollback)
+    if (!game.sectionPoints[playerId]) {
+      game.sectionPoints[playerId] = {};
+    }
+    game.sectionPoints[playerId][sectionId] = (game.sectionPoints[playerId][sectionId] || 0) + result.points;
   });
 
   console.log(`[${roomCode}] Graded ${results.length} submissions`);

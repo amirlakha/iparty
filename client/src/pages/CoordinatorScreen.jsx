@@ -58,8 +58,20 @@ function CoordinatorScreen() {
       setResults(data.results || []);
     });
 
-    socket.on('section-complete', (data) => {
+    socket.on('section-stars', (data) => {
+      console.log('Received section-stars:', data);
+      console.log('Updated scores from section-stars:', data.scores);
       setSectionStars(data.stars || 0);
+      // Update scores immediately with bonus/penalty
+      if (data.scores) {
+        setScores(data.scores);
+        console.log('Scores state updated to:', data.scores);
+      }
+    });
+
+    socket.on('scores-updated', (data) => {
+      console.log('Scores updated:', data.reason, data.scores);
+      setScores(data.scores);
     });
 
     return () => {
@@ -69,7 +81,8 @@ function CoordinatorScreen() {
       socket.off('challenge-data');
       socket.off('answer-submitted');
       socket.off('challenge-results');
-      socket.off('section-complete');
+      socket.off('section-stars');
+      socket.off('scores-updated');
     };
   }, [socket, roomCode]);
 

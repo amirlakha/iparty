@@ -210,49 +210,33 @@ function validateArray(playerAnswer, correctAnswer, options = {}) {
 }
 
 /**
- * Calculate points for an answer
+ * Calculate points for an answer - PLACEMENT-BASED SCORING
+ * - 1st correct: 50 points
+ * - 2nd correct: 30 points
+ * - 3rd correct: 20 points
+ * - 4th+ correct: 10 points each
+ * - Wrong/timeout: 0 points
+ *
  * @param {boolean} isCorrect - Whether answer was correct
- * @param {number} timeSpent - Time spent in milliseconds
- * @param {object} scoring - Scoring configuration
- * @param {number} placement - Player's placement (1st, 2nd, 3rd, etc.)
+ * @param {number} placement - Player's placement (1, 2, 3, 4+) among correct answers
  * @returns {number} - Points earned
  */
-function calculatePoints(isCorrect, timeSpent, scoring = {}, placement = null) {
-  const {
-    correctBase = 50,
-    wrongBase = 5,
-    speedMultipliers = [
-      { threshold: 3000, multiplier: 2.0 },   // < 3s: 2x
-      { threshold: 5000, multiplier: 1.5 },   // < 5s: 1.5x
-      { threshold: 10000, multiplier: 1.2 },  // < 10s: 1.2x
-    ],
-    placementBonuses = {
-      1: 25,
-      2: 15,
-      3: 10
-    }
-  } = scoring;
-
+function calculatePoints(isCorrect, placement = null) {
+  // Wrong answers get 0 points
   if (!isCorrect) {
-    return wrongBase; // Participation points
+    return 0;
   }
 
-  let points = correctBase;
-
-  // Apply speed multiplier
-  for (const { threshold, multiplier } of speedMultipliers) {
-    if (timeSpent < threshold) {
-      points *= multiplier;
-      break;
-    }
+  // No placement = not ranked yet, return 0
+  if (!placement) {
+    return 0;
   }
 
-  // Apply placement bonus
-  if (placement && placementBonuses[placement]) {
-    points += placementBonuses[placement];
-  }
-
-  return Math.round(points);
+  // Placement-based points
+  if (placement === 1) return 50;  // 1st place
+  if (placement === 2) return 30;  // 2nd place
+  if (placement === 3) return 20;  // 3rd place
+  return 10;                       // 4th+ place
 }
 
 /**
@@ -284,11 +268,12 @@ function calculatePlacements(submissions) {
  * @returns {Array} - Array of {playerId, isCorrect, points, placement}
  */
 function gradeSubmissions(submissions, roundConfig) {
-  const { correctAnswer, answerType, validationOptions, scoring } = roundConfig;
+  const { correctAnswer, answerType, validationOptions } = roundConfig;
 
   // Validate all answers
   const validatedSubmissions = submissions.map(sub => ({
     playerId: sub.playerId,
+    playerName: sub.playerName,
     answer: sub.answer,
     timeSpent: sub.timeSpent,
     isCorrect: validateAnswer(
@@ -299,18 +284,19 @@ function gradeSubmissions(submissions, roundConfig) {
     )
   }));
 
-  // Calculate placements
+  // Calculate placements (by speed)
   const placements = calculatePlacements(validatedSubmissions);
 
-  // Calculate points for each submission
+  // Calculate points based on placement
   const results = validatedSubmissions.map(sub => ({
     playerId: sub.playerId,
+    playerName: sub.playerName,
+    answer: sub.answer,
     isCorrect: sub.isCorrect,
+    timeSpent: sub.timeSpent,
     placement: placements.get(sub.playerId) || null,
     points: calculatePoints(
       sub.isCorrect,
-      sub.timeSpent,
-      scoring,
       placements.get(sub.playerId)
     )
   }));
@@ -318,11 +304,56 @@ function gradeSubmissions(submissions, roundConfig) {
   return results;
 }
 
+/**
+ * Calculate stars for a section based on team performance
+ * NEW STAR SYSTEM:
+ * - Each question awards 1 star if ANY player answers correctly
+ * - 3 questions per section = 3 stars possible
+ * - Need 3 stars to pass section
+ *
+ * @param {Array} sectionResults - Array of results for all challenges in section
+ *   Each result should have: { questionNumber, isCorrect, playerId, ... }
+ * @param {number} numPlayers - Total number of players
+ * @returns {Object} - { stars: 0-3, passed: boolean, questionsCorrect: [bool, bool, bool] }
+ */
+function calculateSectionStars(sectionResults, numPlayers) {
+  // Group results by question (assume 3 questions: round 1, 2, 3 of section)
+  // Since we get all results for the section, we need to group by question
+  // Each section has 3 challenges, so split results into 3 groups
+
+  const questionsCorrect = [false, false, false];
+  const resultsPerQuestion = Math.ceil(sectionResults.length / 3);
+
+  // Check each question - if ANY player got it right, award star
+  for (let q = 0; q < 3; q++) {
+    const questionResults = sectionResults.slice(
+      q * resultsPerQuestion,
+      (q + 1) * resultsPerQuestion
+    );
+
+    // If any player got this question correct, award star
+    const anyoneCorrect = questionResults.some(r => r.isCorrect);
+    questionsCorrect[q] = anyoneCorrect;
+  }
+
+  // Count stars (1 per question that someone got right)
+  const stars = questionsCorrect.filter(Boolean).length;
+  const passed = stars === 3; // Need all 3 stars to pass
+
+  return {
+    stars,
+    passed,
+    questionsCorrect,
+    totalQuestions: 3
+  };
+}
+
 module.exports = {
   validateAnswer,
   calculatePoints,
   calculatePlacements,
   gradeSubmissions,
+  calculateSectionStars,
   // Export individual validators for testing
   validateNumber,
   validateText,

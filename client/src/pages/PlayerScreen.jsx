@@ -16,22 +16,51 @@ function PlayerScreen() {
   const [gameState, setGameState] = useState('waiting'); // waiting, active, finished
 
   useEffect(() => {
+    console.log('=== PlayerScreen mounted ===');
+    console.log('Socket:', socket ? 'Connected' : 'Not connected');
+    console.log('Player:', player);
+    console.log('Room:', roomCode);
+
     if (!socket || !player || !roomCode) {
+      console.log('Missing socket/player/room, navigating to home');
       navigate('/');
       return;
     }
 
-    socket.on('round-started', ({ round, roundNumber: rNum }) => {
-      setCurrentRound(round);
-      setRoundNumber(rNum);
-      setGameState('active');
-      setSubmitted(false);
-      setAnswer('');
+    console.log('Setting up event listeners...');
+
+    // New autonomous flow events
+    socket.on('game-state-update', (data) => {
+      console.log('✅ Player received game-state-update:', data.state);
+
+      // Set game state based on server state
+      if (data.state === 'CHALLENGE_ACTIVE') {
+        setGameState('active');
+        setSubmitted(false);
+        setAnswer('');
+      } else if (data.state === 'VICTORY') {
+        setGameState('finished');
+      } else {
+        // All other states (INTRO, SECTION_INTRO, RESULTS, etc.) = waiting
+        setGameState('waiting');
+      }
     });
 
-    socket.on('points-awarded', ({ scores }) => {
+    socket.on('challenge-data', (data) => {
+      console.log('Player received challenge:', data.challenge);
+      setCurrentRound(data.challenge);
+      setRoundNumber(data.round);
+    });
+
+    socket.on('challenge-results', (data) => {
+      console.log('Player received results, scores:', data.scores);
+      setMyScore(data.scores[player.id] || 0);
+    });
+
+    socket.on('scores-updated', ({ scores, reason }) => {
+      // Update score immediately (for bonus/penalty)
+      console.log('Player score updated:', reason, scores[player.id]);
       setMyScore(scores[player.id] || 0);
-      setGameState('waiting');
     });
 
     socket.on('game-finished', ({ scores }) => {
@@ -44,9 +73,15 @@ function PlayerScreen() {
       navigate('/');
     });
 
+    console.log('✅ All event listeners attached!');
+
     return () => {
-      socket.off('round-started');
-      socket.off('points-awarded');
+      console.log('PlayerScreen unmounting, cleaning up listeners');
+      socket.off('game-state-update');
+      socket.off('game-state-update');
+      socket.off('challenge-data');
+      socket.off('challenge-results');
+      socket.off('scores-updated');
       socket.off('game-finished');
       socket.off('host-disconnected');
     };

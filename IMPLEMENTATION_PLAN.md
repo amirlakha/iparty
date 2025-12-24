@@ -268,31 +268,51 @@ socket.on('submit-answer', ({ roomCode, answer, timeSpent }) => {
 
 **Star System (Team Cooperative Progress):**
 ```javascript
-// After each section (3 challenges), calculate stars
-const totalCorrect = sectionResults.filter(r => r.isCorrect).length;
-const totalPossible = numPlayers * 3;
-const percentage = (totalCorrect / totalPossible) * 100;
+// Each question awards 1 star if ANY player answers correctly
+// 3 questions per section = 3 stars possible
 
-if (percentage >= 80) stars = 3; // ⭐⭐⭐ PASS - continue to next section
-if (percentage >= 60) stars = 2; // ⭐⭐ RETRY - replay this section
-else stars = 1;                  // ⭐ RETRY - replay this section
+// For each question in the section:
+const questionResults = sectionResults.filter(r => r.questionNumber === qNum);
+const anyoneCorrect = questionResults.some(r => r.isCorrect);
+if (anyoneCorrect) stars++; // Award 1 star if anyone got it right
+
+// Section completion:
+// 3 stars = ⭐⭐⭐ PASS - continue to next section + everyone gets +50 bonus
+// <3 stars = RETRY - replay section, ALL section points removed from all players
 ```
 
-**Individual Point Calculation (Friendly Competition):**
+**Individual Point Calculation (Placement-Based Competition):**
 ```javascript
-// Every correct answer gets points (no placement bonuses!)
-const basePoints = 100;
-const timeLimit = 60000; // 60 seconds
-const timeRemaining = Math.max(0, timeLimit - timeSpent);
-const speedBonus = Math.floor((timeRemaining / timeLimit) * 100);
-const totalPoints = basePoints + speedBonus; // Range: 100-200 points
+// Placement determined by speed (fastest correct answer = 1st place)
+// Sort correct answers by timeSpent (ascending)
+const placements = correctAnswers.sort((a, b) => a.timeSpent - b.timeSpent);
 
-// Wrong answer: 0 points
+// Award points by placement:
+// 1st place: 50 points
+// 2nd place: 30 points
+// 3rd place: 20 points
+// 4th+ place: 10 points each
+
+// Wrong answer or timeout: 0 points
+```
+
+**Section Bonus/Penalty System:**
+```javascript
+// If section achieves 3 stars:
+players.forEach(player => {
+  player.totalScore += 50; // Bonus for team success
+});
+
+// If section fails (<3 stars):
+players.forEach(player => {
+  player.totalScore -= player.sectionPoints[sectionId]; // Remove ALL points from this section
+  player.sectionPoints[sectionId] = 0; // Reset for retry
+});
 ```
 
 **Stars vs Points:**
-- **Stars** = Team cooperative progress (need ⭐⭐⭐ to pass each section)
-- **Points** = Individual competition (who got the highest score)
+- **Stars** = Team cooperative progress (need 3/3 to pass each section)
+- **Points** = Individual competition (placement-based, with team bonus for success)
 
 **Round Generator Changes:**
 

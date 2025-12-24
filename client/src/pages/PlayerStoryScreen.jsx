@@ -19,14 +19,19 @@ function PlayerStoryScreen() {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
+    console.log('[PlayerStoryScreen] Component mounted/updated - VERSION 2.0');
+    console.log('[PlayerStoryScreen] Socket:', socket?.id, 'Room:', roomCode);
+
     if (!socket || !roomCode) return;
 
     socket.on('game-state-update', (data) => {
+      console.log('[PlayerStoryScreen] Game state update:', data.state, 'Round:', data.round);
       setGameState(data.state);
       setCurrentRound(data.round || 0);
 
       // Reset on new challenge
       if (data.state === 'CHALLENGE_ACTIVE') {
+        console.log('[PlayerStoryScreen] Challenge starting - resetting answer state');
         setSubmitted(false);
         setAnswer('');
         setResult(null);
@@ -35,19 +40,30 @@ function PlayerStoryScreen() {
     });
 
     socket.on('game-started', (data) => {
+      console.log('[PlayerStoryScreen] Game started!');
       setGameState('INTRODUCTION');
     });
 
     socket.on('challenge-data', (data) => {
+      console.log('[PlayerStoryScreen] Challenge received:', data.challenge?.question || data.challenge?.prompt);
       setStartTime(Date.now());
     });
 
     socket.on('challenge-results', (data) => {
       const myResult = data.results.find(r => r.playerId === socket.id);
+      console.log('[PlayerStoryScreen] Challenge results received');
       if (myResult) {
+        console.log('[PlayerStoryScreen] My result:', myResult.isCorrect ? '✅ CORRECT' : '❌ WRONG',
+          `+${myResult.points} points`, myResult.placement ? `(${myResult.placement}th place)` : '');
+        console.log('[PlayerStoryScreen] New score:', data.scores[socket.id]);
         setResult(myResult);
         setMyScore(data.scores[socket.id] || 0);
       }
+    });
+
+    socket.on('scores-updated', (data) => {
+      console.log('[PlayerStoryScreen] Score updated:', data.reason, data.scores[socket.id]);
+      setMyScore(data.scores[socket.id] || 0);
     });
 
     return () => {
@@ -55,6 +71,7 @@ function PlayerStoryScreen() {
       socket.off('game-started');
       socket.off('challenge-data');
       socket.off('challenge-results');
+      socket.off('scores-updated');
     };
   }, [socket, roomCode]);
 
@@ -62,6 +79,8 @@ function PlayerStoryScreen() {
     if (!socket || submitted || !answer.trim()) return;
 
     const timeSpent = Date.now() - startTime;
+
+    console.log('[PlayerStoryScreen] Submitting answer:', answer.trim(), `(${(timeSpent/1000).toFixed(1)}s)`);
 
     socket.emit('submit-answer', {
       roomCode,

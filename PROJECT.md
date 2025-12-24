@@ -266,22 +266,31 @@ Santa's magical workshop has broken! The toy-making machines, reindeer stable, g
 ## 📊 Scoring System
 
 ### Star System (Team Cooperative)
-Each section requires ⭐⭐⭐ (3 stars) to pass:
-- **80%+ correct answers:** ⭐⭐⭐ PASS (continue to next section)
-- **60-79% correct:** ⭐⭐ RETRY (replay this section)
-- **<60% correct:** ⭐ RETRY (replay this section)
+Each section has 3 questions. Each question can award 1 star:
+- **Question star awarded:** If ANY player answers correctly = 1 ⭐
+- **Question star lost:** If NO players answer correctly = 0 stars
 
-Total correct answers across ALL players determines stars.
-Example: 2 players × 3 challenges = 6 total possible correct answers. Need 5-6 correct (83%+) to earn 3 stars.
+**Section completion:**
+- **3 stars (⭐⭐⭐):** PASS - Continue to next section + everyone gets +50 bonus points
+- **<3 stars:** RETRY - Replay section, ALL points earned in section are removed from all players
 
-### Individual Points (Friendly Competition)
-While earning stars together, players compete for highest score:
-- **Correct answer:** 100 base points
-- **Speed bonus:** 0-100 points based on time remaining
-- **Total per correct:** 100-200 points
-- **Wrong answer:** 0 points
+**Example:** 2 players, 3 questions:
+- Q1: Player A ✅, Player B ❌ → 1 ⭐ (someone got it)
+- Q2: Player A ❌, Player B ✅ → 1 ⭐ (someone got it)
+- Q3: Player A ❌, Player B ❌ → 0 stars (nobody got it)
+- **Total: 2 stars** → Section FAILS, points removed, retry section
 
-No placement bonuses - everyone who answers correctly gets points based on their speed.
+### Individual Points (Placement-Based Competition)
+Players compete for fastest correct answers:
+- **1st correct answer:** 50 points
+- **2nd correct answer:** 30 points
+- **3rd correct answer:** 20 points
+- **4th+ correct answer:** 10 points each
+- **Wrong or timeout:** 0 points
+
+**Section bonus/penalty:**
+- **3 stars achieved:** +50 points to everyone
+- **<3 stars failed:** Remove ALL points earned in that section from all players (for retry)
 
 ---
 
@@ -410,11 +419,12 @@ Technical: Digital illustration, 1920x1080px, PNG with transparency
 - **Timeline:** 20-25 hours total implementation
 - **Plan File:** `IMPLEMENTATION_PLAN.md` (full technical roadmap)
 
-### Dec 24, 2024 - Scoring System Clarified
-- **Decision:** Remove placement bonuses from scoring
-- **Reason:** Cooperative game - all correct answers should get points
-- **New System:** Base 100 + speed bonus (0-100) for all correct answers
-- **Star System:** Team-based cooperative (80%+ = 3 stars to pass section)
+### Dec 24, 2024 - Scoring System Clarified (UPDATED)
+- **Decision:** Changed to placement-based competitive scoring
+- **Reason:** Competition encourages faster, more engaged gameplay
+- **New System:** Placement-based points (1st=50, 2nd=30, 3rd=20, 4th+=10)
+- **Star System:** Team-based cooperative (1 star per question if ANY player correct)
+- **Section Pass:** 3 stars = everyone gets +50 bonus, <3 stars = remove all section points and retry
 - **Retry Mechanism:** Sections with <3 stars must be replayed
 - **Points vs Stars:** Stars = team progress (cooperative), Points = individual competition
 
