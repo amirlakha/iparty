@@ -24,7 +24,7 @@ class FlowCoordinator {
   startGame(io, totalPlayers) {
     this.totalPlayers = totalPlayers;
     this.transitionTo(io, GameState.INTRODUCTION);
-    this.scheduleAutoAdvance(io, timing.introduction);
+    // Note: scheduleAutoAdvance is called by handleStateEntry in transitionTo
   }
 
   /**

@@ -93,8 +93,14 @@ function PlayerStoryScreen() {
 
   if (!roomCode || !socket) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-2xl text-white">Connecting...</div>
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
+        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div className="relative z-10 text-center">
+          <div className="font-black text-white drop-shadow-2xl" style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)'}}>
+            Connecting...
+          </div>
+        </div>
       </div>
     );
   }
@@ -102,52 +108,91 @@ function PlayerStoryScreen() {
   // CHALLENGE_ACTIVE - Show input controller
   if (gameState === 'CHALLENGE_ACTIVE' && !submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-600 p-6 flex flex-col">
-        {/* Header */}
-        <div className="bg-white bg-opacity-20 backdrop-blur rounded-xl p-4 mb-4">
-          <div className="flex justify-between items-center text-white">
-            <div className="text-xl font-bold">{playerName}</div>
-            <div className="text-2xl font-bold">⭐ {myScore}</div>
-          </div>
-        </div>
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden"
+        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
-        {/* Main content */}
-        <div className="flex-1 flex flex-col justify-center">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            {/* Instruction */}
-            <div className="text-center mb-6">
-              <div className="text-6xl mb-4">📺</div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Watch the TV!
-              </h2>
-              <p className="text-lg text-gray-600">
-                Answer the question below
-              </p>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
+          <div className="w-full max-w-2xl flex flex-col" style={{maxHeight: '96vh', gap: 'clamp(1rem, 2vh, 2rem)'}}>
+
+            {/* Header with glassmorphism */}
+            <div className="relative bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40 flex-shrink-0"
+                 style={{
+                   padding: 'clamp(1rem, 2vh, 1.5rem)',
+                   boxShadow: `
+                     inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                     0 10px 20px rgba(0, 0, 0, 0.3)
+                   `
+                 }}>
+              <div className="flex justify-between items-center">
+                <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1.25rem, 3vh, 2rem)'}}>
+                  {playerName}
+                </div>
+                <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(1.5rem, 3.5vh, 2.5rem)'}}>
+                  ⭐ {myScore}
+                </div>
+              </div>
             </div>
 
-            {/* Answer Input */}
-            <div className="space-y-4">
-              <input
-                type="text"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Type your answer..."
-                className="w-full text-2xl p-6 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none"
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmitAnswer()}
-                autoFocus
-              />
+            {/* Main content card */}
+            <div className="relative flex-1 min-h-0 overflow-y-auto">
+              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col justify-center border border-white/40"
+                   style={{
+                     padding: 'clamp(1.5rem, 4vh, 3rem)',
+                     boxShadow: `
+                       inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                       inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
+                       0 20px 40px rgba(0, 0, 0, 0.3),
+                       0 10px 20px rgba(0, 0, 0, 0.2)
+                     `,
+                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                   }}>
+                <div className="absolute inset-0 rounded-3xl"
+                     style={{
+                       background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%)',
+                       pointerEvents: 'none'
+                     }}></div>
 
-              <button
-                onClick={handleSubmitAnswer}
-                disabled={!answer.trim()}
-                className={`w-full text-3xl font-bold py-6 rounded-xl transition-all ${
-                  !answer.trim()
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white active:scale-95'
-                }`}
-              >
-                Submit Answer
-              </button>
+                <div className="relative z-10">
+                  {/* Instruction */}
+                  <div className="text-center" style={{marginBottom: 'clamp(1.5rem, 3vh, 3rem)'}}>
+                    <div style={{fontSize: 'clamp(3rem, 8vh, 6rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>📺</div>
+                    <h2 className="font-black text-purple-600" style={{fontSize: 'clamp(1.5rem, 3.5vh, 3rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                      Watch the TV!
+                    </h2>
+                    <p className="text-gray-900 font-bold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                      Answer the question below
+                    </p>
+                  </div>
+
+                  {/* Answer Input */}
+                  <div style={{display: 'flex', flexDirection: 'column', gap: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>
+                    <input
+                      type="text"
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      placeholder="Type your answer..."
+                      className="w-full bg-white rounded-2xl border-4 border-blue-400 focus:border-blue-600 focus:outline-none shadow-lg"
+                      style={{padding: 'clamp(1rem, 2vh, 1.5rem)', fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSubmitAnswer()}
+                      autoFocus
+                    />
+
+                    <button
+                      onClick={handleSubmitAnswer}
+                      disabled={!answer.trim()}
+                      className={`w-full rounded-2xl font-black shadow-2xl border-4 border-white transition-all ${
+                        !answer.trim()
+                          ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                          : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white active:scale-95'
+                      }`}
+                      style={{padding: 'clamp(1.25rem, 3vh, 2rem)', fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}
+                    >
+                      Submit Answer
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -158,28 +203,52 @@ function PlayerStoryScreen() {
   // CHALLENGE_ACTIVE - After submission (waiting for results)
   if (gameState === 'CHALLENGE_ACTIVE' && submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-600 to-emerald-600 p-6 flex flex-col">
-        {/* Header */}
-        <div className="bg-white bg-opacity-20 backdrop-blur rounded-xl p-4 mb-4">
-          <div className="flex justify-between items-center text-white">
-            <div className="text-xl font-bold">{playerName}</div>
-            <div className="text-2xl font-bold">⭐ {myScore}</div>
-          </div>
-        </div>
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden"
+        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
-        {/* Submitted confirmation */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-12 shadow-2xl text-center">
-            <div className="text-9xl mb-6 animate-bounce">✅</div>
-            <h2 className="text-4xl font-bold text-green-600 mb-4">
-              Submitted!
-            </h2>
-            <p className="text-2xl text-gray-700 mb-6">
-              Your answer: <span className="font-bold">{answer}</span>
-            </p>
-            <p className="text-xl text-gray-600">
-              Waiting for other players...
-            </p>
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
+          <div className="w-full max-w-2xl">
+            {/* Header */}
+            <div className="relative bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40"
+                 style={{
+                   padding: 'clamp(1rem, 2vh, 1.5rem)',
+                   marginBottom: 'clamp(1rem, 2vh, 2rem)',
+                   boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.6), 0 10px 20px rgba(0, 0, 0, 0.3)'
+                 }}>
+              <div className="flex justify-between items-center">
+                <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1.25rem, 3vh, 2rem)'}}>
+                  {playerName}
+                </div>
+                <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(1.5rem, 3.5vh, 2.5rem)'}}>
+                  ⭐ {myScore}
+                </div>
+              </div>
+            </div>
+
+            {/* Submitted confirmation */}
+            <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl border border-white/40"
+                 style={{
+                   padding: 'clamp(2rem, 6vh, 4rem)',
+                   boxShadow: `
+                     inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                     0 20px 40px rgba(0, 0, 0, 0.3)
+                   `,
+                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                 }}>
+              <div className="text-center">
+                <div className="animate-bounce" style={{fontSize: 'clamp(4rem, 12vh, 8rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)'}}>✅</div>
+                <h2 className="font-black text-green-600" style={{fontSize: 'clamp(2rem, 5vh, 4rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                  Submitted!
+                </h2>
+                <p className="text-gray-900 font-bold" style={{fontSize: 'clamp(1.25rem, 2.5vh, 2rem)', marginBottom: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                  Your answer: <span className="text-blue-600">{answer}</span>
+                </p>
+                <p className="text-gray-800 font-semibold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                  Waiting for other players...
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -189,53 +258,74 @@ function PlayerStoryScreen() {
   // CHALLENGE_RESULTS - Show personal result
   if (gameState === 'CHALLENGE_RESULTS' && result) {
     return (
-      <div className={`min-h-screen p-6 flex flex-col ${
-        result.isCorrect
-          ? 'bg-gradient-to-br from-green-600 to-emerald-600'
-          : 'bg-gradient-to-br from-red-600 to-orange-600'
-      }`}>
-        {/* Header */}
-        <div className="bg-white bg-opacity-20 backdrop-blur rounded-xl p-4 mb-4">
-          <div className="flex justify-between items-center text-white">
-            <div className="text-xl font-bold">{playerName}</div>
-            <div className="text-2xl font-bold">⭐ {myScore}</div>
-          </div>
-        </div>
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden"
+        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
-        {/* Result */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-12 shadow-2xl text-center max-w-md w-full">
-            <div className={`text-9xl mb-6 ${result.isCorrect ? 'animate-bounce' : 'animate-shake'}`}>
-              {result.isCorrect ? '✅' : '❌'}
-            </div>
-            <h2 className={`text-5xl font-black mb-6 ${
-              result.isCorrect ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {result.isCorrect ? 'Correct!' : 'Incorrect'}
-            </h2>
-
-            <div className="bg-blue-100 rounded-xl p-6 mb-6">
-              <div className="text-2xl text-gray-700 mb-2">You earned:</div>
-              <div className="text-6xl font-black text-blue-600">
-                +{result.points}
-              </div>
-              <div className="text-xl text-gray-600 mt-2">points</div>
-            </div>
-
-            {result.placement && result.placement <= 3 && (
-              <div className="bg-yellow-100 rounded-xl p-4">
-                <div className="text-5xl mb-2">
-                  {result.placement === 1 ? '🥇' : result.placement === 2 ? '🥈' : '🥉'}
+        <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
+          <div className="w-full max-w-2xl">
+            {/* Header */}
+            <div className="relative bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40"
+                 style={{
+                   padding: 'clamp(1rem, 2vh, 1.5rem)',
+                   marginBottom: 'clamp(1rem, 2vh, 2rem)',
+                   boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.6), 0 10px 20px rgba(0, 0, 0, 0.3)'
+                 }}>
+              <div className="flex justify-between items-center">
+                <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1.25rem, 3vh, 2rem)'}}>
+                  {playerName}
                 </div>
-                <div className="text-xl font-bold text-gray-800">
-                  {result.placement === 1 ? '1st' : result.placement === 2 ? '2nd' : '3rd'} Place!
+                <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(1.5rem, 3.5vh, 2.5rem)'}}>
+                  ⭐ {myScore}
                 </div>
               </div>
-            )}
+            </div>
 
-            <p className="text-lg text-gray-600 mt-6">
-              Watch the TV for full results!
-            </p>
+            {/* Result card */}
+            <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl border border-white/40"
+                 style={{
+                   padding: 'clamp(2rem, 6vh, 4rem)',
+                   boxShadow: `
+                     inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                     0 20px 40px rgba(0, 0, 0, 0.3)
+                   `,
+                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                 }}>
+              <div className="text-center">
+                <div className={result.isCorrect ? 'animate-bounce' : ''} style={{fontSize: 'clamp(4rem, 12vh, 8rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)'}}>
+                  {result.isCorrect ? '✅' : '❌'}
+                </div>
+                <h2 className={`font-black ${result.isCorrect ? 'text-green-600' : 'text-red-600'}`}
+                    style={{fontSize: 'clamp(2rem, 6vh, 5rem)', marginBottom: 'clamp(1.5rem, 3vh, 3rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                  {result.isCorrect ? 'Correct!' : 'Incorrect'}
+                </h2>
+
+                <div className="bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl shadow-xl border-4 border-white"
+                     style={{padding: 'clamp(1.5rem, 3vh, 2.5rem)', marginBottom: 'clamp(1.5rem, 3vh, 2rem)'}}>
+                  <div className="text-white font-bold" style={{fontSize: 'clamp(1.25rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>You earned:</div>
+                  <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(3rem, 8vh, 6rem)'}}>
+                    +{result.points}
+                  </div>
+                  <div className="text-white font-semibold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)'}}>points</div>
+                </div>
+
+                {result.placement && result.placement <= 3 && (
+                  <div className="bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-2xl shadow-xl border-4 border-white"
+                       style={{padding: 'clamp(1rem, 2vh, 1.5rem)', marginBottom: 'clamp(1rem, 2vh, 1.5rem)'}}>
+                    <div style={{fontSize: 'clamp(3rem, 6vh, 5rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                      {result.placement === 1 ? '🥇' : result.placement === 2 ? '🥈' : '🥉'}
+                    </div>
+                    <div className="font-black text-gray-900" style={{fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}>
+                      {result.placement === 1 ? '1st' : result.placement === 2 ? '2nd' : '3rd'} Place!
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-gray-800 font-bold" style={{fontSize: 'clamp(1rem, 2vh, 1.25rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                  Watch the TV for full results!
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -244,75 +334,95 @@ function PlayerStoryScreen() {
 
   // DEFAULT - "Watch the TV" for all other states
   return (
-    <div
-      className="min-h-screen flex flex-col p-4"
-      style={{
-        backgroundImage: 'url(/src/assets/images/home-background.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
-    >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden"
+      style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
-      {/* Header */}
-      <div className="relative z-10 bg-white bg-opacity-95 backdrop-blur rounded-2xl p-4 mb-4 shadow-xl border-4 border-blue-500">
-        <div className="flex justify-between items-center">
-          <div className="text-xl font-bold text-gray-800">{playerName}</div>
-          <div className="text-2xl font-bold text-blue-600">⭐ {myScore}</div>
-        </div>
-      </div>
-
-      {/* Watch TV message */}
-      <div className="relative z-10 flex-1 flex items-center justify-center">
-        <div className="text-center max-w-sm">
-          <div className="text-7xl md:text-8xl mb-6 animate-pulse">📺</div>
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-8 drop-shadow-2xl">
-            Watch the TV!
-          </h2>
-
-          {gameState === 'LOBBY' && (
-            <div className="bg-white bg-opacity-95 rounded-2xl p-6 shadow-2xl border-4 border-green-500">
-              <div className="text-5xl mb-3">⏳</div>
-              <p className="text-2xl font-bold text-gray-800 mb-2">Waiting in Lobby</p>
-              <p className="text-lg text-gray-600 mb-4">Room: {roomCode}</p>
-              <p className="text-base text-gray-600">The host will start the game soon...</p>
-            </div>
-          )}
-
-          {gameState === 'INTRODUCTION' && (
-            <div className="bg-white bg-opacity-95 rounded-2xl p-6 shadow-2xl border-4 border-red-500">
-              <div className="text-5xl mb-3">🎅</div>
-              <p className="text-2xl font-bold text-gray-800">Story Starting...</p>
-            </div>
-          )}
-
-          {gameState === 'SECTION_INTRO' && (
-            <div className="bg-white bg-opacity-95 rounded-2xl p-6 shadow-2xl border-4 border-purple-500">
-              <div className="text-5xl mb-3">🎯</div>
-              <p className="text-2xl font-bold text-gray-800">New Section!</p>
-            </div>
-          )}
-
-          {gameState === 'SECTION_COMPLETE' && (
-            <div className="bg-white bg-opacity-95 rounded-2xl p-6 shadow-2xl border-4 border-yellow-500">
-              <div className="text-6xl mb-4">🎉</div>
-              <p className="text-2xl font-bold text-gray-800">Section Complete!</p>
-            </div>
-          )}
-
-          {gameState === 'VICTORY' && (
-            <div className="bg-white bg-opacity-95 rounded-2xl p-8 shadow-2xl border-4 border-yellow-500">
-              <div className="text-7xl mb-4">🏆</div>
-              <h3 className="text-3xl font-black text-gray-800 mb-4">
-                You Win!
-              </h3>
-              <div className="text-6xl font-black text-blue-600 mb-2">
-                {myScore}
+      <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
+        <div className="w-full max-w-2xl flex flex-col" style={{gap: 'clamp(1rem, 2vh, 2rem)'}}>
+          {/* Header */}
+          <div className="relative bg-white/30 backdrop-blur-xl rounded-2xl border border-white/40 flex-shrink-0"
+               style={{
+                 padding: 'clamp(1rem, 2vh, 1.5rem)',
+                 boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.6), 0 10px 20px rgba(0, 0, 0, 0.3)'
+               }}>
+            <div className="flex justify-between items-center">
+              <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1.25rem, 3vh, 2rem)'}}>
+                {playerName}
               </div>
-              <p className="text-xl text-gray-600">Final Score</p>
+              <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(1.5rem, 3.5vh, 2.5rem)'}}>
+                ⭐ {myScore}
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* Watch TV message */}
+          <div className="text-center">
+            <div className="animate-pulse" style={{fontSize: 'clamp(4rem, 10vh, 8rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)'}}>📺</div>
+            <h2 className="font-black text-yellow-300 drop-shadow-2xl"
+                style={{
+                  fontSize: 'clamp(2rem, 6vh, 5rem)',
+                  marginBottom: 'clamp(1.5rem, 3vh, 3rem)',
+                  WebkitTextStroke: '2px #1e40af',
+                  paintOrder: 'stroke fill',
+                  textShadow: '3px 3px 0px rgba(0,0,0,0.5)'
+                }}>
+              Watch the TV!
+            </h2>
+
+            <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl border border-white/40"
+                 style={{
+                   padding: 'clamp(1.5rem, 4vh, 3rem)',
+                   boxShadow: `
+                     inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                     0 20px 40px rgba(0, 0, 0, 0.3)
+                   `,
+                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%)'
+                 }}>
+              {gameState === 'LOBBY' && (
+                <div className="text-center">
+                  <div style={{fontSize: 'clamp(3rem, 6vh, 5rem)', marginBottom: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>⏳</div>
+                  <p className="font-black text-gray-900" style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>Waiting in Lobby</p>
+                  <p className="font-bold text-gray-800" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>Room: {roomCode}</p>
+                  <p className="text-gray-700 font-semibold" style={{fontSize: 'clamp(0.875rem, 1.75vh, 1.25rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>The host will start the game soon...</p>
+                </div>
+              )}
+
+              {gameState === 'INTRODUCTION' && (
+                <div className="text-center">
+                  <div style={{fontSize: 'clamp(3rem, 6vh, 5rem)', marginBottom: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>🎅</div>
+                  <p className="font-black text-gray-900" style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>Story Starting...</p>
+                </div>
+              )}
+
+              {gameState === 'SECTION_INTRO' && (
+                <div className="text-center">
+                  <div style={{fontSize: 'clamp(3rem, 6vh, 5rem)', marginBottom: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>🎯</div>
+                  <p className="font-black text-gray-900" style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>New Section!</p>
+                </div>
+              )}
+
+              {gameState === 'SECTION_COMPLETE' && (
+                <div className="text-center">
+                  <div style={{fontSize: 'clamp(3rem, 6vh, 6rem)', marginBottom: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>🎉</div>
+                  <p className="font-black text-gray-900" style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>Section Complete!</p>
+                </div>
+              )}
+
+              {gameState === 'VICTORY' && (
+                <div className="text-center">
+                  <div style={{fontSize: 'clamp(4rem, 8vh, 7rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)'}}>🏆</div>
+                  <h3 className="font-black text-purple-600" style={{fontSize: 'clamp(2rem, 4vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                    You Win!
+                  </h3>
+                  <div className="font-black text-blue-600" style={{fontSize: 'clamp(3rem, 6vh, 6rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                    {myScore}
+                  </div>
+                  <p className="text-gray-800 font-bold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>Final Score</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

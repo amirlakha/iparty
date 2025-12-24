@@ -326,11 +326,91 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 **Next Priorities:**
 1. ✅ Test timers in browser (refresh to see timers in action)
 2. ✅ Test star display shows correct number when <3 stars
-3. Replace emoji stars with star-icon.png on SECTION_COMPLETE screen
+3. ✅ Replace emoji stars with star-icon.png on SECTION_COMPLETE screen
 4. Mini-game implementation (need 5 more games: Trivia, True/False, Spelling, Pattern, Memory)
 5. Full end-to-end testing
 6. Cloud deployment
 7. Final polish and bug fixes
+
+**Session Continued - Star Icon Integration:**
+
+**Completed:**
+- ✅ **Replaced emoji stars with star-icon.png on SECTION_COMPLETE screen**
+  - Used premium 3D star asset with large size (4rem-12rem responsive)
+  - Added custom starPulse animation with glow effects
+  - Stars display conditionally based on sectionStars value (1-3)
+  - Only used on SECTION_COMPLETE where detail can be appreciated
+
+**Session Continued - Player Screen Redesign:**
+
+**Completed:**
+- ✅ **Identified and cleaned up player screen files**
+  - Found two files: PlayerScreen.jsx (unused) and PlayerStoryScreen.jsx (active)
+  - Deleted PlayerScreen.jsx dead code (276 lines removed)
+  - Grep confirmed PlayerStoryScreen.jsx is the only one imported in App.jsx
+
+- ✅ **Complete redesign of PlayerStoryScreen.jsx**
+  - Applied glassmorphism design matching coordinator screens
+  - Backdrop-blur-xl with layered shadows on all panels
+  - Responsive typography using clamp() for all text (1.5rem-2.5rem, 1rem-1.5rem, etc.)
+  - Responsive padding, gaps, and sizes using vh units with clamp()
+  - Updated all 4 game states:
+    - CHALLENGE_ACTIVE (input): Large answer input with submit button
+    - CHALLENGE_ACTIVE (submitted): "Answer submitted" confirmation
+    - CHALLENGE_RESULTS: Show correct answer, points earned, placement
+    - Default: "Watch the TV screen" waiting state
+  - Consistent glass panel pattern across all states
+  - Gradient overlays (white 0.4 → 0.2 opacity)
+  - Professional look matching TV coordinator design
+
+**Visual Consistency Achieved:**
+- Player screens (mobile) now match coordinator screens (TV) in design language
+- Same glassmorphism effects, shadows, and blur
+- Same responsive scaling strategy using clamp()
+- Unified color palette and typography
+- Full responsive support for all mobile screen sizes
+
+**Next Priorities:**
+1. Test player screens on actual mobile devices to verify responsive scaling
+2. Mini-game implementation (need 5 more games: Trivia, True/False, Spelling, Pattern, Memory)
+3. Full end-to-end testing with multiple players
+4. Cloud deployment (Vercel + Railway)
+5. Final polish and bug fixes
+
+**Session Continued - Bug Fixes:**
+
+**Completed:**
+- ✅ **Fixed INTRODUCTION screen issues**
+  - Removed non-functional "LET'S GO!" button (autonomous flow, no manual controls)
+  - Fixed progress bar duration from 8s to 12s (matches christmasStory.js spec)
+  - Fixed progress bar not filling - changed color from purple to blue (visibility issue)
+  - Fixed progress bar positioning to match other screens
+
+- ✅ **Fixed server-side duplicate timer bug**
+  - Removed duplicate `scheduleAutoAdvance` call in flowCoordinator.js
+  - Was being called twice: once in startGame() and once in handleStateEntry()
+  - This was causing React StrictMode remount issues on client
+
+- ✅ **Fixed client-side state synchronization**
+  - Removed gameState setting from 'game-started' event handler
+  - Let 'game-state-update' event handle state changes exclusively
+  - Prevents timerKey from incrementing mid-render and resetting progress bars
+
+**Bug Investigation Process:**
+- Identified React StrictMode double-mount behavior in development
+- Traced event flow: game-started → game-state-update sequence
+- Discovered purple color wasn't visible on INTRODUCTION background
+- All other progress bars worked fine, issue was INTRODUCTION-specific
+
+**Files Modified:**
+- `client/src/pages/CoordinatorScreen.jsx` - Button removal, timer fixes, event handler cleanup
+- `client/src/components/ProgressBar.jsx` - Kept subtle original styling
+- `server/utils/flowCoordinator.js` - Removed duplicate scheduleAutoAdvance call
+
+**Testing:**
+- ✅ INTRODUCTION progress bar now fills correctly over 12 seconds
+- ✅ All progress bars working on all screens
+- ✅ Autonomous flow advancing correctly with proper timing
 
 ---
 
@@ -374,4 +454,4 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 
 ---
 
-Last Updated: Dec 24, 2024 (Christmas Eve Day - Visual Polish Complete)
+Last Updated: Dec 24, 2024 (Christmas Eve Day - Player Screens Complete)

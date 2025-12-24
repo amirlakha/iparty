@@ -30,7 +30,7 @@ function CoordinatorScreen() {
       setGameState(data.state);
       setCurrentRound(data.round || 0);
       setCurrentSection(data.section || 0);
-      setTimerKey(prev => prev + 1); // Reset timer on state change
+      setTimerKey(prev => prev + 1);
 
       // Reset submissions on new challenge
       if (data.state === 'CHALLENGE_ACTIVE') {
@@ -44,7 +44,7 @@ function CoordinatorScreen() {
     });
 
     socket.on('game-started', (data) => {
-      setGameState('INTRODUCTION');
+      // Don't set gameState here - game-state-update will handle it immediately after
       setPlayers(data.game.players);
       setScores(data.game.scores);
     });
@@ -312,22 +312,13 @@ function CoordinatorScreen() {
                       {line}
                     </p>
                   ))}
-                  <div style={{marginTop: 'clamp(1.5rem, 3vh, 3.5rem)'}}>
-                    <button className="relative w-full bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 hover:from-yellow-500 hover:via-red-600 hover:to-pink-600 rounded-full shadow-2xl border-4 border-white transition-all hover:scale-105 active:scale-95 overflow-hidden"
-                      style={{padding: 'clamp(1.25rem, 3vh, 2.25rem) clamp(1.5rem, 4vh, 3rem)'}}>
-                      <div className="absolute inset-0 bg-white opacity-0 hover:opacity-20 transition-opacity"></div>
-                      <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1.25rem, 3.5vh, 4rem)'}}>
-                        🚀 LET'S GO! 🚀
-                      </div>
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
           {/* Progress bar at bottom */}
           <div className="absolute bottom-0 left-0 right-0 px-8">
-            <ProgressBar key={`intro-${timerKey}`} duration={8} color="purple" />
+            <ProgressBar key={`intro-${timerKey}`} duration={12} color="blue" />
           </div>
         </div>
       </div>
@@ -717,6 +708,19 @@ function CoordinatorScreen() {
           .animate-starburst {
             animation: starburst 4s ease-in-out infinite;
           }
+          @keyframes starPulse {
+            0%, 100% {
+              transform: scale(1);
+              filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+            }
+            50% {
+              transform: scale(1.1);
+              filter: drop-shadow(0 0 30px rgba(255, 215, 0, 1));
+            }
+          }
+          .star-earned {
+            animation: starPulse 2s ease-in-out infinite;
+          }
         `}</style>
         <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
         <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
@@ -738,10 +742,43 @@ function CoordinatorScreen() {
               SECTION COMPLETE! 🎯
             </h1>
 
-            <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(0.5rem, 2vh, 1.5rem)'}}>
-              {sectionStars >= 1 && <span className="animate-bounce text-yellow-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0s'}}>⭐</span>}
-              {sectionStars >= 2 && <span className="animate-bounce text-green-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.1s'}}>⭐</span>}
-              {sectionStars >= 3 && <span className="animate-bounce text-blue-300" style={{fontSize: 'clamp(2rem, 6vh, 6rem)', animationDelay: '0.2s'}}>⭐</span>}
+            <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(1rem, 3vh, 3rem)'}}>
+              {sectionStars >= 1 && (
+                <img
+                  src="/src/assets/images/star-icon.png"
+                  alt="Star"
+                  className="star-earned"
+                  style={{
+                    width: 'clamp(4rem, 12vh, 12rem)',
+                    height: 'clamp(4rem, 12vh, 12rem)',
+                    animationDelay: '0s'
+                  }}
+                />
+              )}
+              {sectionStars >= 2 && (
+                <img
+                  src="/src/assets/images/star-icon.png"
+                  alt="Star"
+                  className="star-earned"
+                  style={{
+                    width: 'clamp(4rem, 12vh, 12rem)',
+                    height: 'clamp(4rem, 12vh, 12rem)',
+                    animationDelay: '0.2s'
+                  }}
+                />
+              )}
+              {sectionStars >= 3 && (
+                <img
+                  src="/src/assets/images/star-icon.png"
+                  alt="Star"
+                  className="star-earned"
+                  style={{
+                    width: 'clamp(4rem, 12vh, 12rem)',
+                    height: 'clamp(4rem, 12vh, 12rem)',
+                    animationDelay: '0.4s'
+                  }}
+                />
+              )}
             </div>
 
             {/* Glassmorphism panel */}
