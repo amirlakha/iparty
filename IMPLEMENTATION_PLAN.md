@@ -28,8 +28,12 @@ Transform iParty from a host-controlled, low-fidelity party game into a fully au
 - Basic Tailwind CSS UI
 
 **New Design:**
+- **Jackbox-Style Architecture**:
+  - **Main Screen (TV)**: Full cinematic game everyone watches together (story, questions, results, scoreboard)
+  - **Player Devices (Phones)**: Simple input controllers only (answer field, submit button, personal feedback)
 - **Autonomous Flow**: Game runs automatically with timer-based progression
 - **Story Structure**: 5 workshop sections × 3 challenges = 15 total rounds
+- **Star-Based Progression**: Need ⭐⭐⭐ (80%+ team score) to pass each section, or retry
 - **Automatic Scoring**: Server validates answers and awards points objectively
 - **Visual Polish**: 13 generated images integrated throughout
 - **Age-Adaptive**: Difficulty scales to player age (7-9, 10-12, 13-17)
@@ -262,11 +266,33 @@ socket.on('submit-answer', ({ roomCode, answer, timeSpent }) => {
 });
 ```
 
-**Point Calculation:**
-- Correct answer: Base 50 points
-- Speed multipliers: <3s = 2.0x, 3-5s = 1.5x, 5-10s = 1.2x
-- Placement bonuses: 1st = +25, 2nd = +15, 3rd = +10
-- Wrong answer: 5 points (participation)
+**Star System (Team Cooperative Progress):**
+```javascript
+// After each section (3 challenges), calculate stars
+const totalCorrect = sectionResults.filter(r => r.isCorrect).length;
+const totalPossible = numPlayers * 3;
+const percentage = (totalCorrect / totalPossible) * 100;
+
+if (percentage >= 80) stars = 3; // ⭐⭐⭐ PASS - continue to next section
+if (percentage >= 60) stars = 2; // ⭐⭐ RETRY - replay this section
+else stars = 1;                  // ⭐ RETRY - replay this section
+```
+
+**Individual Point Calculation (Friendly Competition):**
+```javascript
+// Every correct answer gets points (no placement bonuses!)
+const basePoints = 100;
+const timeLimit = 60000; // 60 seconds
+const timeRemaining = Math.max(0, timeLimit - timeSpent);
+const speedBonus = Math.floor((timeRemaining / timeLimit) * 100);
+const totalPoints = basePoints + speedBonus; // Range: 100-200 points
+
+// Wrong answer: 0 points
+```
+
+**Stars vs Points:**
+- **Stars** = Team cooperative progress (need ⭐⭐⭐ to pass each section)
+- **Points** = Individual competition (who got the highest score)
 
 **Round Generator Changes:**
 
@@ -379,10 +405,24 @@ Applied to:
 ### State Machine
 
 ```
-LOBBY → SECTION_INTRO (8s) → CHALLENGE_1 (60s) → RESULTS (5s) →
-CHALLENGE_2 (60s) → RESULTS (5s) → CHALLENGE_3 (60s) → RESULTS (5s) →
-SECTION_COMPLETE (3s) → MAP_TRANSITION (5s) → [next section] →
-... → GAME_COMPLETE → VICTORY_SCREEN
+LOBBY
+  ↓ (coordinator clicks Start)
+INTRODUCTION (12s auto-advance)
+  ↓
+SECTION_INTRO (8s auto-advance)
+  ↓
+CHALLENGE_ACTIVE (60s or all submit)
+  ↓
+CHALLENGE_RESULTS (5s auto-advance)
+  ↓
+  If 3 challenges done in section:
+    Calculate section stars (80%+ correct = 3 stars)
+    If stars >= 3:
+      SECTION_COMPLETE (5s) → Next section or VICTORY
+    Else:
+      SECTION_FAILED (5s) → Retry section (reset to challenge 1)
+  Else:
+    Next challenge
 ```
 
 ### Timer Rules
@@ -407,6 +447,256 @@ SECTION_COMPLETE (3s) → MAP_TRANSITION (5s) → [next section] →
 - `section-complete` - Success animation
 - `show-village-map` - Transition screen
 - `answer-result` - Immediate feedback to player
+
+---
+
+## Detailed Screen Mockups
+
+This section shows exactly what appears on the TV (main screen) vs player devices (phones) for each game state.
+
+### LOBBY
+
+**Main Screen (TV):**
+```
+🎄 iParty - Save Christmas! 🎄
+
+Room Code: ABC123
+
+Players Joined:
+👤 Mia (Age 17)
+👤 Lana (Age 15)
+
+[START GAME]
+```
+
+**Player Device:**
+```
+iParty
+
+You: Mia
+Room: ABC123
+
+Waiting for game to start...
+(2 players)
+```
+
+### INTRODUCTION
+
+**Main Screen:**
+```
+[Santa Character Artwork]
+
+"OH NO! The North Pole is in chaos!
+The toy machines are broken, the
+reindeer are lost, gifts are unwrapped..."
+
+Help save Christmas by fixing
+all 5 workshops!
+
+(Auto-advances in 8 seconds)
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0
+
+Get ready...
+
+Watch the main screen!
+```
+
+### SECTION_INTRO
+
+**Main Screen:**
+```
+[Toy Machine Workshop Background]
+
+🎁 Toy Machine Workshop
+
+[Elf Character]
+
+"The toy machines are jammed! Answer
+these puzzles to get them working again!"
+
+Section 1 of 5 • Need ⭐⭐⭐ to pass
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0
+
+🎁 Section 1
+
+Watch the TV!
+Get ready...
+```
+
+### CHALLENGE_ACTIVE
+
+**Main Screen:**
+```
+[Toy Machine Workshop Background]
+
+Challenge 1 of 3
+⏱️ 0:45 remaining
+
+┌────────────────────────────┐
+│                            │
+│   What is 13 + 7?          │
+│                            │
+└────────────────────────────┘
+
+Submissions:
+✅ Mia (answered)
+⏳ Lana (thinking...)
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0   Points: 0
+
+Your Answer:
+┌──────────────┐
+│ [_________]  │ ← Input field
+└──────────────┘
+
+[SUBMIT ANSWER] ← Big button
+
+⏱️ 0:45
+```
+
+### CHALLENGE_RESULTS
+
+**Main Screen:**
+```
+Challenge 1 - Results
+
+Correct Answer: 20
+
+┌────────────────────────────┐
+│ Lana    20  ✅  +180 pts   │ (fast!)
+│ Mia     20  ✅  +120 pts   │
+└────────────────────────────┘
+
+Scoreboard:
+1st Lana - 180 pts
+2nd Mia  - 120 pts
+
+(Next challenge in 5 seconds...)
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0
+
+✅ CORRECT!
+
++120 points
+
+Total: 120
+
+Watch the TV for results!
+```
+
+### SECTION_COMPLETE
+
+**Main Screen:**
+```
+[Celebration Animation/Artwork]
+
+🎁 Toy Machine Workshop
+
+⭐⭐⭐ 3 STARS! SECTION PASSED!
+
+"Great work! The toy machines are
+running again! Toys for everyone!"
+
+[Character celebrating]
+
+Progress: 1 of 5 sections complete
+Total Stars: ⭐⭐⭐ / 15
+```
+
+**Player Device:**
+```
+You: Mia
+
+Section 1:
+⭐⭐⭐ PASSED!
+
+Your Points: 280
+
+Great job!
+```
+
+### SECTION_FAILED (Retry)
+
+**Main Screen:**
+```
+[Workshop Background - Darker]
+
+🎁 Toy Machine Workshop
+
+⭐⭐ ONLY 2 STARS
+
+Need 3 stars to fix the workshop!
+
+[Sad elf character]
+"Oh no! The machines are still broken.
+Let's try again!"
+
+RETRYING SECTION 1...
+(Starting in 5 seconds)
+```
+
+**Player Device:**
+```
+You: Mia
+
+Section Failed!
+⭐⭐ / ⭐⭐⭐
+
+Retrying...
+
+Watch the TV
+```
+
+### VICTORY
+
+**Main Screen:**
+```
+[Victory Scene Artwork]
+
+🎄 CHRISTMAS IS SAVED! 🎄
+
+All 5 workshops fixed!
+Total Stars: ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+
+[All characters celebrating]
+
+Final Scoreboard:
+🥇 Lana - 1,240 pts (MVP!)
+🥈 Mia  - 1,105 pts
+
+MERRY CHRISTMAS! 🎅
+```
+
+**Player Device:**
+```
+🎄 YOU WON! 🎄
+
+You: Mia
+Rank: 2nd 🥈
+
+Final Score:
+1,105 points
+
+Christmas is saved!
+```
 
 ---
 

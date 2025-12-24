@@ -19,8 +19,7 @@ An **engaging, story-driven party game** for kids aged 7-17 where they embark on
 - [x] Player lobby and registration
 - [x] Mobile + TV screen dual-interface
 - [x] Network connectivity working
-- [x] Basic scoring system
-- [x] Points-to-cash conversion system
+- [x] Autonomous game flow system
 - [x] Game redesign and planning
 - [x] Character artwork (Santa, Elf, Reindeer)
 - [x] Background artwork (5 workshop scenes)
@@ -32,12 +31,12 @@ An **engaging, story-driven party game** for kids aged 7-17 where they embark on
 - [ ] Track progress: `PROGRESS.md`
 
 ### ❌ Needs Work
-- [ ] Story-driven narrative framework
-- [ ] Automatic objective scoring (no host needed)
-- [ ] Engaging UI/UX with animations
-- [ ] Cloud deployment (remove IP address complexity)
-- [ ] Challenge types with clear winners
-- [ ] Progress visualization
+- [ ] Screen architecture redesign (TV = main game, phones = controllers)
+- [ ] Star-based team progression system (3 stars required per section)
+- [ ] Section retry mechanism (replay if <3 stars)
+- [ ] Engaging UI/UX with artwork integration
+- [ ] Additional mini-games (currently only Speed Math)
+- [ ] Cloud deployment
 
 ---
 
@@ -259,31 +258,25 @@ Santa's magical workshop has broken! The toy-making machines, reindeer stable, g
 
 ---
 
-## 📊 Scoring System (Revised)
+## 📊 Scoring System
 
-### Point Values
-- **First Correct:** 50 points
-- **Second Correct:** 40 points
-- **Third Correct:** 30 points
-- **Correct (slower):** 20 points
-- **Wrong Answer:** 5 points (participation)
-- **No Answer:** 0 points
+### Star System (Team Cooperative)
+Each section requires ⭐⭐⭐ (3 stars) to pass:
+- **80%+ correct answers:** ⭐⭐⭐ PASS (continue to next section)
+- **60-79% correct:** ⭐⭐ RETRY (replay this section)
+- **<60% correct:** ⭐ RETRY (replay this section)
 
-### Speed Multipliers
-- **<5 seconds:** 2x points
-- **5-10 seconds:** 1.5x points
-- **10-20 seconds:** 1x points
-- **>20 seconds:** 0.8x points
+Total correct answers across ALL players determines stars.
+Example: 2 players × 3 challenges = 6 total possible correct answers. Need 5-6 correct (83%+) to earn 3 stars.
 
-### Special Bonuses
-- **Perfect Round:** All 3 questions in a section correct = 25 bonus
-- **Speed Demon:** First to answer 5 times = 50 bonus
-- **Comeback King:** Biggest point gain in one round = 30 bonus
+### Individual Points (Friendly Competition)
+While earning stars together, players compete for highest score:
+- **Correct answer:** 100 base points
+- **Speed bonus:** 0-100 points based on time remaining
+- **Total per correct:** 100-200 points
+- **Wrong answer:** 0 points
 
-### Points-to-Cash
-- **Default Rate:** $0.10 per point
-- **Expected Total per Player:** 400-600 points = $40-$60
-- **Configurable** in settings
+No placement bonuses - everyone who answers correctly gets points based on their speed.
 
 ---
 
@@ -404,18 +397,21 @@ Technical: Digital illustration, 1920x1080px, PNG with transparency
 
 ### Dec 23, 2024 - Implementation Plan Approved
 - **Decision:** Full rebuild with story-driven autonomous game flow
-- **Approach:** Delete HostScreen, create autonomous CoordinatorScreen
+- **Approach:** Redesign screens for Jackbox-style experience
 - **Story:** "Save Christmas Village" - 5 workshop sections × 3 challenges
-- **Scoring:** Fully automatic server-side validation (no host needed)
+- **Scoring:** Star-based team progression + individual points
+- **Screen Architecture:** TV shows main game, phones are input controllers only
 - **Mini-Games:** 6 MVP games for launch (Math, Trivia, Spelling, True/False, Pattern, Memory)
 - **Timeline:** 20-25 hours total implementation
 - **Plan File:** `IMPLEMENTATION_PLAN.md` (full technical roadmap)
-- **Progress File:** `PROGRESS.md` (session-by-session tracking)
-- **Architecture:**
-  - ~20 new files (screens, components, mini-games, data)
-  - ~500 lines modified (server auto-scoring, client updates)
-  - ~600 lines deleted (old HostScreen, roundGenerator)
-- **Next:** Begin foundation implementation (story engine, validators, question pools)
+
+### Dec 24, 2024 - Scoring System Clarified
+- **Decision:** Remove placement bonuses from scoring
+- **Reason:** Cooperative game - all correct answers should get points
+- **New System:** Base 100 + speed bonus (0-100) for all correct answers
+- **Star System:** Team-based cooperative (80%+ = 3 stars to pass section)
+- **Retry Mechanism:** Sections with <3 stars must be replayed
+- **Points vs Stars:** Stars = team progress (cooperative), Points = individual competition
 
 ---
 

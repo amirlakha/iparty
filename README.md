@@ -1,154 +1,282 @@
-# 🎉 iParty - Family Party Game
+# 🎄 iParty - Save Christmas Village!
 
-A fun, interactive party game for families! Built for Christmas 2024 where kids play fun challenges and earn points that convert to cash prizes!
+An autonomous, story-driven Christmas adventure party game where kids work together to save Christmas by completing challenges across Santa's workshop.
 
-## 🎮 Features
+**Target Players:** Ages 7-17
+**Game Length:** 60-75 minutes
+**Devices:** TV/projector for main screen + phones/tablets as controllers
 
-- **Multi-device gameplay**: Big screen for host + individual phones for players
-- **10+ Challenge Types**: Trivia, Would You Rather, Creative Prompts, and more
-- **Flexible Modes**: 1v1 battles, team challenges, and all-play rounds
-- **Points to Cash**: Automatic conversion of game points to Christmas money
-- **Ages 7-17**: Challenges designed for wide age range
-- **Real-time Updates**: Socket.io powered live gameplay
+---
+
+## 🎮 Game Overview
+
+### The Story
+
+OH NO! Santa's magical workshop has broken down! The toy machines are jammed, the reindeer are lost, gift wrapping has stopped, cookies are unbaked, and the sleigh won't launch!
+
+Players must work together to fix all 5 workshop sections by completing challenges. Each section needs ⭐⭐⭐ (3 stars) to be repaired. Fail to get 3 stars? Retry until you succeed! Only when ALL workshops are fixed can Christmas be saved!
+
+### How It Works
+
+**Main Screen (TV):** Shows the story, questions, and results - everyone watches together
+**Player Devices:** Simple controllers for answering questions - minimal UI
+
+This creates a shared experience like Jackbox games - all eyes on the TV!
+
+### Game Structure
+
+```
+5 Workshop Sections × 3 Challenges Each = 15 Total Rounds
+
+🎁 Section 1: Toy Machine Workshop (Rounds 1-3)
+🦌 Section 2: Reindeer Stable (Rounds 4-6)
+🎀 Section 3: Gift Wrapping Station (Rounds 7-9)
+🍪 Section 4: Cookie Kitchen (Rounds 10-12)
+🛷 Section 5: Sleigh Launch Pad (Rounds 13-15)
+```
+
+**To Win:** Earn ⭐⭐⭐ on all 5 sections = 15 total stars = Christmas saved!
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- A laptop/computer for the server
-- Mobile phones for players
-- A big screen/TV for displaying the host view
 
-### Installation
+- Node.js (v16+)
+- Computer for running the server
+- WiFi network
+- TV/large screen for main display
+- Phones/tablets for each player
 
-1. **Start the Server** (in one terminal):
+### Setup (5 minutes)
+
+**1. Start the Server**
+
+Open Terminal #1:
 ```bash
 cd server
 npm start
 ```
 
-The server will run on `http://localhost:3001`
+You should see: `🎉 iParty server running on port 3001`
 
-2. **Start the Client** (in another terminal):
+**2. Start the Client**
+
+Open Terminal #2:
 ```bash
 cd client
 npm run dev
 ```
 
-The client will run on `http://localhost:5173`
+You should see: `Local: http://localhost:5173/`
 
-### How to Play
+**3. Get Your Computer's IP Address**
 
-1. **Host Setup** (on the big screen TV):
-   - Open a browser and go to `http://localhost:5173`
-   - Click "Host a Game"
-   - Enter your name
-   - You'll get a **ROOM CODE** - display this on the big screen!
-
-2. **Players Join** (on their phones):
-   - Each player opens their phone browser
-   - Go to `http://YOUR-LAPTOP-IP:5173` (see below for finding your IP)
-   - Click "Join a Game"
-   - Enter the room code from the TV
-   - Enter their name and age
-
-3. **Start Playing**:
-   - Once everyone has joined, the host clicks "START GAME"
-   - Players answer challenges on their phones
-   - Points are awarded after each round
-   - Game ends with final scores and cash conversion!
-
-### Finding Your Laptop's IP Address
-
-**On Mac:**
+Terminal #3:
 ```bash
+# Mac/Linux:
 ifconfig | grep "inet " | grep -v 127.0.0.1
-```
 
-**On Windows:**
-```bash
+# Windows:
 ipconfig
 ```
 
-Look for your local IP (usually starts with `192.168.x.x` or `10.0.x.x`)
-
-Then players visit: `http://YOUR-IP:5173` (e.g., `http://192.168.1.100:5173`)
-
-## 💰 Points to Cash Conversion
-
-- Default rate: **$0.10 per point**
-- To change the rate, edit these files:
-  - `client/src/pages/HostScreen.jsx` - Line 250 (POINTS_TO_CASH)
-  - `client/src/pages/PlayerScreen.jsx` - Line 92 (POINTS_TO_CASH)
-
-## 🎯 Game Structure
-
-- **15 rounds** by default (configurable in `client/src/utils/roundGenerator.js`)
-- **Mix of game modes**:
-  - 1v1 battles (2 players compete)
-  - Team challenges (teams work together)
-  - All-play (everyone competes)
-
-## 🎨 Challenge Types
-
-1. **Quick Trivia** - Multiple choice questions
-2. **Would You Rather** - Fun preference questions
-3. **Creative Challenges** - Imaginative prompts
-4. **Number Challenges** - Quick math
-5. **Rhyme Time** - Find rhyming words
-6. **This or That** - Pick favorites
-7. **Quick Think** - Fast associations
-8. **Emoji Story** - Interpret emoji sequences
-9. **Finish the Sentence** - Complete prompts
-
-## 📱 Troubleshooting
-
-### Players can't connect from phones
-- Make sure all devices are on the **same WiFi network**
-- Check your firewall isn't blocking ports 3001 or 5173
-- Try using your laptop's IP address instead of "localhost"
-
-### Game not loading
-- Make sure both server AND client are running
-- Check the browser console for errors (F12)
-
-### Socket connection failed
-- Verify the server is running on port 3001
-- Check `client/src/context/SocketContext.jsx` - change `localhost:3001` to your laptop's IP if needed
-
-## 🛠 Customization
-
-### Change Number of Rounds
-Edit `client/src/pages/HostScreen.jsx`, find the `startGame()` function:
-```javascript
-const rounds = generateRounds(game.players, 15); // Change 15 to desired number
-```
-
-### Add More Challenges
-Edit `client/src/utils/roundGenerator.js` and add to the `challenges` array
-
-### Change Colors/Theme
-Edit `client/tailwind.config.js` to customize colors
-
-## 🎄 Christmas Game Tips
-
-- Set aside 60-90 minutes for a full game
-- Have the room code ready before calling everyone together
-- Test with 2 players first to make sure everything works
-- Consider adjusting the points-to-cash rate based on your budget
-- Take screenshots of the final scoreboard!
-
-## 📝 Notes
-
-- The game uses in-memory storage, so restarting the server clears all games
-- Room codes are randomly generated 6-character codes
-- All players must wait in the lobby until the host starts
-- Points are awarded for participation (10pts), completion (15pts), and winning (25pts)
-
-## 🎁 Have Fun!
-
-Merry Christmas! Enjoy the game with your family! 🎉
+Look for: `192.168.x.x` or `10.0.x.x`
+**Write this down!** Players need it to connect.
 
 ---
 
-Built with ❤️ using React, Node.js, Express, and Socket.io
+## 🎯 How to Play
+
+### On the Main Screen (TV):
+
+1. Open browser to: `http://localhost:5173`
+2. Click **"Coordinate a Game"**
+3. Enter coordinator name
+4. **Display the ROOM CODE** big on screen!
+
+### On Each Player's Device:
+
+1. Connect to **same WiFi** as the server computer
+2. Open browser to: `http://YOUR-IP:5173`
+   (e.g., `http://192.168.1.100:5173`)
+3. Click **"Join a Game"**
+4. Enter the **room code** from TV
+5. Enter name and age
+
+### Start the Adventure:
+
+1. Once everyone joined, click **"START GAME"** on TV
+2. Game runs **fully autonomous** - no host control needed!
+3. Players answer on their devices
+4. Everyone watches the main screen together
+5. Complete all 5 sections to save Christmas!
+
+---
+
+## ⭐ Star System (Team Performance)
+
+### How Stars Work
+
+Each section has 3 challenges. Stars earned based on team performance:
+
+```
+Total correct answers ÷ Total possible × 100 = Percentage
+
+80%+ → ⭐⭐⭐ PASS (move to next section)
+60-79% → ⭐⭐ RETRY (replay this section)
+<60% → ⭐ RETRY (replay this section)
+```
+
+**Example (2 players, 3 challenges):**
+- 6 total possible correct answers
+- Need 5-6 correct (83%+) to pass with 3 stars
+- 4 correct (67%) = Only 2 stars = Retry section
+
+**This is cooperative!** Work together to get 3 stars on every section.
+
+### Individual Points (For Fun Competition)
+
+While earning stars together, players compete for highest individual score:
+
+```
+Correct answer: 100 base points + speed bonus (0-100)
+Wrong answer: 0 points
+```
+
+**Speed bonus example:**
+- Answer in 5 seconds = +92 bonus = 192 total points
+- Answer in 30 seconds = +50 bonus = 150 total points
+- Answer in 55 seconds = +8 bonus = 108 total points
+
+Fastest correct answer gets most points!
+
+---
+
+## 🎮 Mini-Games
+
+**Currently Implemented:**
+1. Speed Math - Quick arithmetic
+
+**Coming Soon:**
+2. Multiple Choice Trivia
+3. True/False Questions
+4. Spelling Bee
+5. Color Pattern Match
+6. Memory Match
+
+See `MINI_GAMES.md` for full game designs.
+
+---
+
+## 🎨 Visual Design
+
+The game features 13 custom-generated images:
+
+**Backgrounds:** 5 workshop scenes
+**Characters:** Santa, Elf, Reindeer
+**UI Elements:** Logo, stars, map, celebrations
+
+All artwork located in: `client/src/assets/images/`
+
+---
+
+## 📱 Troubleshooting
+
+### Players Can't Connect
+
+**Check:**
+- ✅ Everyone on same WiFi network?
+- ✅ Used IP address, not "localhost"?
+- ✅ Both server and client running?
+- ✅ Firewall not blocking ports 3001 or 5173?
+
+### Game Not Loading
+
+- Check both terminals - server AND client must be running
+- Look for errors in browser console (F12)
+- Try refreshing the page
+
+### Socket Connection Failed
+
+- Verify server shows "Client connected" logs
+- Check `client/src/context/SocketContext.jsx` socket URL
+- Try restarting both server and client
+
+---
+
+## 🛠 Technical Details
+
+**Frontend:** React 19.2, Vite, Tailwind CSS
+**Backend:** Node.js, Express, Socket.io
+**Real-time:** WebSocket communication
+**State Management:** Server-authoritative game state
+
+### Project Structure
+
+```
+iparty/
+├── client/              # React frontend
+│   ├── src/
+│   │   ├── pages/       # Main screens
+│   │   ├── components/  # Reusable UI
+│   │   ├── context/     # Socket context
+│   │   ├── data/        # Story & questions
+│   │   ├── utils/       # Game logic
+│   │   └── assets/      # Images
+│   └── package.json
+├── server/              # Node.js backend
+│   ├── index.js         # Main server
+│   ├── utils/           # Game utilities
+│   └── package.json
+├── IMPLEMENTATION_PLAN.md  # Technical roadmap
+├── MINI_GAMES.md        # Game designs
+└── CLAUDE.md            # AI assistant guide
+```
+
+---
+
+## 📝 Development Notes
+
+### Current Status (Dec 24, 2024)
+
+**Working:**
+- ✅ Multiplayer infrastructure
+- ✅ Autonomous game flow
+- ✅ Basic challenge generation
+- ✅ Socket communication
+
+**In Progress:**
+- 🔄 Screen architecture redesign (TV vs controllers)
+- 🔄 Star rating system implementation
+- 🔄 Section retry mechanism
+
+**Planned:**
+- ⏳ Additional mini-games (5 more)
+- ⏳ Artwork integration
+- ⏳ Cloud deployment
+
+See `IMPLEMENTATION_PLAN.md` for detailed technical roadmap.
+
+---
+
+## 🎄 Christmas Day Tips
+
+1. **Test ahead:** Run through one full game before family arrives
+2. **Room code:** Write it LARGE on the TV screen
+3. **IP address:** Have it ready on a sticky note
+4. **WiFi:** Make sure everyone knows the network name/password
+5. **Timing:** Set aside 75-90 minutes for full playthrough
+6. **Backup:** Keep the server computer plugged in!
+
+---
+
+## 🎁 Have an Amazing Christmas!
+
+Merry Christmas! May your family save Christmas Village together! 🎉🎄
+
+---
+
+**Built with ❤️ for Christmas 2024**
+React • Node.js • Express • Socket.io • Tailwind CSS

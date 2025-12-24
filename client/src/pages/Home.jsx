@@ -5,18 +5,18 @@ import { useSocket } from '../context/SocketContext';
 function Home() {
   const navigate = useNavigate();
   const { socket, connected } = useSocket();
-  const [mode, setMode] = useState(null); // 'host' or 'join'
-  const [hostName, setHostName] = useState('');
+  const [mode, setMode] = useState(null); // 'coordinator' or 'join'
+  const [coordinatorName, setCoordinatorName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [playerAge, setPlayerAge] = useState('');
 
   const handleCreateGame = () => {
-    if (!hostName.trim()) return;
+    if (!coordinatorName.trim()) return;
 
-    socket.emit('create-game', { hostName });
+    socket.emit('create-game', { coordinatorName });
     socket.once('game-created', ({ roomCode, game }) => {
-      navigate('/host', { state: { roomCode, game } });
+      navigate('/coordinator', { state: { roomCode, coordinatorName } });
     });
   };
 
@@ -61,10 +61,10 @@ function Home() {
 
           <div className="space-y-4">
             <button
-              onClick={() => setMode('host')}
+              onClick={() => setMode('coordinator')}
               className="w-full btn-primary text-2xl py-4"
             >
-              🎯 Host a Game
+              🎯 Coordinate a Game
             </button>
             <button
               onClick={() => setMode('join')}
@@ -78,7 +78,7 @@ function Home() {
     );
   }
 
-  if (mode === 'host') {
+  if (mode === 'coordinator') {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="card max-w-md w-full">
@@ -90,7 +90,7 @@ function Home() {
           </button>
 
           <div className="text-6xl text-center mb-4">🎯</div>
-          <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Host a Game</h2>
+          <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Coordinate a Game</h2>
 
           <div className="space-y-4">
             <div>
@@ -99,8 +99,8 @@ function Home() {
               </label>
               <input
                 type="text"
-                value={hostName}
-                onChange={(e) => setHostName(e.target.value)}
+                value={coordinatorName}
+                onChange={(e) => setCoordinatorName(e.target.value)}
                 className="input-field"
                 placeholder="Enter your name"
                 onKeyPress={(e) => e.key === 'Enter' && handleCreateGame()}
@@ -109,7 +109,7 @@ function Home() {
 
             <button
               onClick={handleCreateGame}
-              disabled={!hostName.trim()}
+              disabled={!coordinatorName.trim()}
               className="w-full btn-primary text-xl py-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Game Room

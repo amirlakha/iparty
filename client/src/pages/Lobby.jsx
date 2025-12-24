@@ -29,7 +29,16 @@ function Lobby() {
     });
 
     socket.on('game-started', () => {
-      navigate('/play', { state: { player, roomCode } });
+      navigate('/play', { state: {
+        playerName: player.name,
+        playerAge: player.age,
+        roomCode
+      } });
+    });
+
+    socket.on('coordinator-disconnected', () => {
+      alert('Coordinator disconnected. Game ended.');
+      navigate('/');
     });
 
     socket.on('host-disconnected', () => {
@@ -42,6 +51,7 @@ function Lobby() {
       socket.off('player-left');
       socket.off('teams-assigned');
       socket.off('game-started');
+      socket.off('coordinator-disconnected');
       socket.off('host-disconnected');
     };
   }, [socket, navigate, roomCode, player]);

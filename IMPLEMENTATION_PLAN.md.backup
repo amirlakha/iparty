@@ -1,0 +1,711 @@
+# iParty Implementation Plan
+**Story-Driven Autonomous Christmas Adventure Game**
+
+**Target:** Christmas Day (Dec 25, 2024)
+**Last Updated:** December 24, 2024
+
+---
+
+## Current State & Required Changes
+
+### What's Wrong Now
+
+**Screen Architecture is Backwards:**
+- CoordinatorScreen: Shows admin dashboard (boring)
+- PlayerScreen: Shows full story, challenges, and results
+- Problem: Everyone staring at their phones instead of shared TV experience
+
+**Missing Core Features:**
+- No star rating system (sections pass/fail)
+- No section retry mechanism
+- Scoring has placement bonuses (wrong for cooperative game)
+- Challenge generation is placeholder (simple math only)
+
+### What We're Building
+
+**Correct Architecture (Jackbox-style):**
+- **Main Screen (TV)**: The actual game everyone watches together
+  - Full story narrative and cinematics
+  - Challenge questions (large, readable)
+  - All players' submissions
+  - Live scoreboard and results
+  - Rich visuals with artwork
+- **Player Devices (Phones)**: Simple input controllers
+  - Just answer input field
+  - Submit button
+  - Personal score display
+  - Minimal UI, no story content
+
+**Core Game Mechanics:**
+- 5 sections × 3 challenges = 15 total rounds
+- Each section needs ⭐⭐⭐ (3 stars) to pass
+- Fail a section → retry those 3 challenges
+- Fully autonomous (no manual controls)
+- Server validates all answers automatically
+
+---
+
+## Story Structure
+
+```
+Save Christmas Village - 5 Act Adventure
+
+Act 1: Toy Machine Workshop (Rounds 1-3)
+├─ Story Intro (8s): "The toy machine is broken!"
+├─ Challenge 1: [Mini-game]
+├─ Challenge 2: [Mini-game]
+├─ Challenge 3: [Mini-game]
+└─ Section Complete: Check stars → Pass (continue) or Fail (retry)
+
+Act 2: Reindeer Stable (Rounds 4-6)
+Act 3: Gift Wrapping Station (Rounds 7-9)
+Act 4: Cookie Kitchen (Rounds 10-12)
+Act 5: Sleigh Launch Pad (Rounds 13-15)
+
+Victory: All 5 sections have 3 stars → Christmas saved!
+```
+
+---
+
+## Star Scoring System
+
+### How Stars Are Earned (Team Performance)
+
+**Per Section (3 challenges):**
+```javascript
+const totalCorrect = allCorrectAnswersFromAllPlayers; // Sum across all players
+const totalPossible = numPlayers * 3; // 3 challenges × number of players
+const percentage = (totalCorrect / totalPossible) * 100;
+
+if (percentage >= 80) stars = 3; // ⭐⭐⭐ PASS
+if (percentage >= 60) stars = 2; // ⭐⭐ RETRY
+else stars = 1;                  // ⭐ RETRY
+```
+
+**Example (2 players, 6 total possible correct):**
+- 5-6 correct (83-100%) → ⭐⭐⭐ Pass, continue to next section
+- 4 correct (67%) → ⭐⭐ Retry this section
+- 0-3 correct (0-50%) → ⭐ Retry this section
+
+### Pass/Fail Logic
+
+**Pass (⭐⭐⭐):**
+- Show success celebration
+- Move to next section
+- Unlock next part of story
+
+**Fail (<3 stars):**
+- Show retry message
+- Reset section to beginning
+- Replay same 3 challenges
+- Can retry unlimited times
+
+**Game Victory:**
+- All 5 sections have ⭐⭐⭐
+- Total: 15 stars earned
+- Show victory screen
+
+---
+
+## Individual Points System
+
+### Scoring Rules (Cooperative, Not Competitive)
+
+**Every correct answer gets points:**
+```javascript
+// Base points
+const basePoints = 100;
+
+// Speed bonus (0-100 points based on time remaining)
+const timeLimit = 60000; // 60 seconds
+const timeRemaining = timeLimit - timeSpent;
+const speedBonus = Math.floor((timeRemaining / timeLimit) * 100);
+
+// Total
+const totalPoints = basePoints + speedBonus;
+// Range: 100-200 points per correct answer
+```
+
+**No placement bonuses** - this is cooperative!
+Fast players naturally get more points from speed bonus.
+
+**Incorrect answers:** 0 points
+
+---
+
+## Game State Flow
+
+### State Machine
+
+```
+LOBBY
+  ↓ (coordinator clicks Start)
+INTRODUCTION (12s auto-advance)
+  ↓
+SECTION_INTRO (8s auto-advance)
+  ↓
+CHALLENGE_ACTIVE (60s or all submit)
+  ↓
+CHALLENGE_RESULTS (5s auto-advance)
+  ↓
+  If 3 challenges done in section:
+    Calculate section stars
+    If stars >= 3:
+      SECTION_COMPLETE (5s) → Next section
+    Else:
+      SECTION_FAILED (5s) → Retry section
+  Else:
+    Next challenge
+  ↓
+After 5 sections complete:
+  VICTORY
+```
+
+### What Shows on Each Screen
+
+#### LOBBY
+
+**Main Screen (TV):**
+```
+🎄 iParty - Save Christmas! 🎄
+
+Room Code: ABC123
+
+Players Joined:
+👤 Mia (Age 17)
+👤 Lana (Age 15)
+
+[START GAME]
+```
+
+**Player Device:**
+```
+iParty
+
+You: Mia
+Room: ABC123
+
+Waiting for game to start...
+(2 players)
+```
+
+---
+
+#### INTRODUCTION
+
+**Main Screen:**
+```
+[Santa Character Artwork]
+
+"OH NO! The North Pole is in chaos!
+The toy machines are broken, the
+reindeer are lost, gifts are unwrapped..."
+
+Help save Christmas by fixing
+all 5 workshops!
+
+(Auto-advances in 8 seconds)
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0
+
+Get ready...
+
+Watch the main screen!
+```
+
+---
+
+#### SECTION_INTRO
+
+**Main Screen:**
+```
+[Toy Machine Workshop Background]
+
+🎁 Toy Machine Workshop
+
+[Elf Character]
+
+"The toy machines are jammed! Answer
+these puzzles to get them working again!"
+
+Section 1 of 5 • Need ⭐⭐⭐ to pass
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0
+
+🎁 Section 1
+
+Watch the TV!
+Get ready...
+```
+
+---
+
+#### CHALLENGE_ACTIVE
+
+**Main Screen:**
+```
+[Toy Machine Workshop Background]
+
+Challenge 1 of 3
+⏱️ 0:45 remaining
+
+┌────────────────────────────┐
+│                            │
+│   What is 13 + 7?          │
+│                            │
+└────────────────────────────┘
+
+Submissions:
+✅ Mia (answered)
+⏳ Lana (thinking...)
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0   Points: 0
+
+Your Answer:
+┌──────────────┐
+│ [_________]  │ ← Input field
+└──────────────┘
+
+[SUBMIT ANSWER] ← Big button
+
+⏱️ 0:45
+```
+
+---
+
+#### CHALLENGE_RESULTS
+
+**Main Screen:**
+```
+Challenge 1 - Results
+
+Correct Answer: 20
+
+┌────────────────────────────┐
+│ Lana    20  ✅  +180 pts   │ (fast!)
+│ Mia     20  ✅  +120 pts   │
+└────────────────────────────┘
+
+Scoreboard:
+1st Lana - 180 pts
+2nd Mia  - 120 pts
+
+(Next challenge in 5 seconds...)
+```
+
+**Player Device:**
+```
+You: Mia
+⭐ 0
+
+✅ CORRECT!
+
++120 points
+
+Total: 120
+
+Watch the TV for results!
+```
+
+---
+
+#### SECTION_COMPLETE
+
+**Main Screen:**
+```
+[Celebration Animation/Artwork]
+
+🎁 Toy Machine Workshop
+
+⭐⭐⭐ 3 STARS! SECTION PASSED!
+
+"Great work! The toy machines are
+running again! Toys for everyone!"
+
+[Character celebrating]
+
+Progress: 1 of 5 sections complete
+Total Stars: ⭐⭐⭐ / 15
+```
+
+**Player Device:**
+```
+You: Mia
+
+Section 1:
+⭐⭐⭐ PASSED!
+
+Your Points: 280
+
+Great job!
+```
+
+---
+
+#### SECTION_FAILED (Retry)
+
+**Main Screen:**
+```
+[Workshop Background - Darker]
+
+🎁 Toy Machine Workshop
+
+⭐⭐ ONLY 2 STARS
+
+Need 3 stars to fix the workshop!
+
+[Sad elf character]
+"Oh no! The machines are still broken.
+Let's try again!"
+
+RETRYING SECTION 1...
+(Starting in 5 seconds)
+```
+
+**Player Device:**
+```
+You: Mia
+
+Section Failed!
+⭐⭐ / ⭐⭐⭐
+
+Retrying...
+
+Watch the TV
+```
+
+---
+
+#### VICTORY
+
+**Main Screen:**
+```
+[Victory Scene Artwork]
+
+🎄 CHRISTMAS IS SAVED! 🎄
+
+All 5 workshops fixed!
+Total Stars: ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+
+[All characters celebrating]
+
+Final Scoreboard:
+🥇 Lana - 1,240 pts (MVP!)
+🥈 Mia  - 1,105 pts
+
+MERRY CHRISTMAS! 🎅
+```
+
+**Player Device:**
+```
+🎄 YOU WON! 🎄
+
+You: Mia
+Rank: 2nd 🥈
+
+Final Score:
+1,105 points
+
+Christmas is saved!
+```
+
+---
+
+## Implementation Tasks
+
+### Phase 1: Fix Screen Architecture (HIGH PRIORITY)
+
+**Files to Completely Redesign:**
+
+1. **CoordinatorScreen.jsx** → Main game experience
+   - Current: Admin dashboard
+   - Change to: Full cinematic game screen
+   - Components needed:
+     - `<IntroductionCinematic />`
+     - `<SectionStoryScreen />`
+     - `<ChallengeQuestionScreen />`
+     - `<ResultsScreen />`
+     - `<SectionCompleteScreen />`
+     - `<SectionFailedScreen />`
+     - `<VictoryScreen />`
+
+2. **PlayerStoryScreen.jsx** → Rename to PlayerInputScreen.jsx
+   - Current: Full story and challenges
+   - Change to: Minimal input controller
+   - Keep only:
+     - Name and score header
+     - Input field (when challenge active)
+     - Submit button
+     - Personal feedback ("Correct!", "Wrong!")
+
+**New Components to Create:**
+
+```
+client/src/components/
+├── coordinator/
+│   ├── IntroductionCinematic.jsx
+│   ├── SectionStoryScreen.jsx
+│   ├── ChallengeQuestionScreen.jsx
+│   ├── ResultsScreen.jsx
+│   ├── SectionCompleteScreen.jsx
+│   ├── SectionFailedScreen.jsx
+│   └── VictoryScreen.jsx
+├── player/
+│   ├── PlayerHeader.jsx
+│   ├── InputForm.jsx
+│   ├── WaitingMessage.jsx
+│   └── PersonalFeedback.jsx
+└── shared/
+    ├── BackgroundLayer.jsx
+    ├── CharacterDisplay.jsx
+    ├── ScoreboardDisplay.jsx
+    └── StarProgress.jsx
+```
+
+### Phase 2: Implement Star System
+
+**Server Changes:**
+
+```javascript
+// server/index.js
+
+// Add to game state
+game.sectionStars = [0, 0, 0, 0, 0]; // Track stars for each section
+game.sectionResults = []; // Track results per section
+
+// After section completes (3 challenges done)
+function calculateSectionStars(sectionResults, numPlayers) {
+  const totalCorrect = sectionResults.filter(r => r.isCorrect).length;
+  const totalPossible = numPlayers * 3;
+  const percentage = (totalCorrect / totalPossible) * 100;
+
+  if (percentage >= 80) return 3;
+  if (percentage >= 60) return 2;
+  return 1;
+}
+
+// On section complete
+const stars = calculateSectionStars(game.sectionResults, game.players.length);
+game.sectionStars[currentSection - 1] = stars;
+
+if (stars < 3) {
+  // RETRY SECTION
+  flowCoordinator.retrySection(io);
+} else {
+  // PASS - continue
+  flowCoordinator.nextSection(io);
+}
+```
+
+**FlowCoordinator Changes:**
+
+```javascript
+// server/utils/flowCoordinator.js
+
+retrySection(io) {
+  // Reset to beginning of current section
+  const firstRoundOfSection = ((this.currentSection - 1) * 3) + 1;
+  this.currentRound = firstRoundOfSection - 1; // Will increment in nextRound()
+
+  // Clear section results
+  this.sectionResults = [];
+
+  // Show retry message
+  this.transitionTo(io, GameState.SECTION_FAILED);
+}
+
+nextSection(io) {
+  // Continue to next section or victory
+  if (this.currentSection >= 5) {
+    this.transitionTo(io, GameState.VICTORY);
+  } else {
+    this.transitionTo(io, GameState.MAP_TRANSITION);
+  }
+}
+```
+
+### Phase 3: Fix Scoring
+
+**Remove placement bonuses from answerValidator.js:**
+
+```javascript
+// server/utils/answerValidator.js
+
+function calculatePoints(isCorrect, timeSpent, scoring) {
+  if (!isCorrect) return 0;
+
+  const basePoints = scoring.correct || 100;
+
+  // Speed bonus (0-100 based on time remaining)
+  const timeLimit = scoring.timeLimit || 60000;
+  const timeRemaining = Math.max(0, timeLimit - timeSpent);
+  const speedBonus = Math.floor((timeRemaining / timeLimit) * 100);
+
+  return basePoints + speedBonus;
+  // NO placement bonuses!
+}
+```
+
+### Phase 4: Artwork Integration
+
+**Background Images (use as full-screen backgrounds):**
+- Section 1: `bg-toy-machine.png`
+- Section 2: `bg-reindeer-stable.png`
+- Section 3: `bg-gift-wrap.png`
+- Section 4: `bg-cookie-kitchen.png`
+- Section 5: `bg-sleigh-launch.png`
+
+**Character Images (display during story sections):**
+- `santa-character.png` - Introduction
+- `elf-character.png` - Workshop sections
+- `reindeer-character.png` - Reindeer section
+
+**UI Elements:**
+- `game-logo.png` - Home screen, lobby
+- `star-icon.png` - Replace ⭐ emoji
+- `victory-scene.png` - Victory screen
+- `celebration-burst.png` - Section complete animations
+
+### Phase 5: Mini-Games (MVP - 6 Games)
+
+See `MINI_GAMES.md` for detailed specs.
+
+**Required for Christmas:**
+1. Speed Math (DONE - currently implemented)
+2. Multiple Choice Trivia
+3. True/False Questions
+4. Spelling Bee
+5. Color Pattern Match
+6. Memory Match
+
+**Implementation:**
+- Create question generators for each type
+- Update `challengeGenerator.js` to randomly select game types
+- Each game type has specific validation logic in `answerValidator.js`
+
+---
+
+## UI Design Guidelines
+
+### Main Screen (TV)
+- **Font sizes:** 48px+ body, 72px+ headings
+- **Readable from 10 feet away**
+- **High contrast**
+- **Centered layouts**
+- **Full-screen background images**
+- **Smooth transitions**
+- **Festive Christmas colors**
+
+### Player Screen (Phone)
+- **Font sizes:** 18px+ (standard mobile)
+- **Touch targets:** 44px+ minimum
+- **Single column layout**
+- **Minimal scrolling**
+- **Simple, not distracting**
+- **Large input fields and buttons**
+
+---
+
+## Technical Architecture
+
+### Server State Management
+
+```javascript
+// Game state structure
+{
+  roomCode: 'ABC123',
+  coordinator: socketId,
+  players: [{ id, name, age }],
+  gameState: 'LOBBY', // Current state
+  currentRound: 0,    // 1-15
+  currentSection: 0,  // 1-5
+  sectionStars: [0, 0, 0, 0, 0], // Stars earned per section
+  scores: { playerId: points },
+  playerAges: { playerId: age },
+  medianAge: 12,
+  currentChallenge: { question, correctAnswer, type, ... },
+  sectionResults: [] // Results for current section
+}
+```
+
+### Information Flow
+
+```
+Main Screen (TV)          Server              Player Devices
+┌──────────────┐         ┌──────┐            ┌──────────────┐
+│              │         │      │            │              │
+│  Story       │◄────────┤      │            │  Input       │
+│  Questions   │         │ Game │            │  Submit      │
+│  Results     │         │ State│            │  Feedback    │
+│  Scoreboard  │         │      │            │              │
+│              │─────────►│      │◄───────────┤              │
+└──────────────┘         └──────┘            └──────────────┘
+
+Everyone watches         Validates            Personal
+together                 & scores             controller
+```
+
+**Events:**
+- `game-state-update` → Both screens
+- `challenge-data` → Main screen shows question
+- `submit-answer` → Players send answers
+- `challenge-results` → Both screens (full results vs personal)
+- `section-complete` → Both screens
+- `section-failed` → Both screens
+
+---
+
+## Success Criteria
+
+**Main Screen Test:**
+- ✅ Can play entire game by only watching TV
+- ✅ Everything readable from 10 feet away
+- ✅ Looks like professional party game
+
+**Player Screen Test:**
+- ✅ Can submit answers without looking at phone
+- ✅ Simple input controller only
+- ✅ No distracting story content
+
+**Game Flow Test:**
+- ✅ Failing section triggers retry
+- ✅ Stars calculated correctly
+- ✅ Game ends when all sections have 3 stars
+- ✅ Fully autonomous (no manual controls)
+
+---
+
+## Timeline
+
+**Immediate (Next 2-3 hours):**
+- [ ] Fix screen architecture
+- [ ] Implement star system
+- [ ] Fix scoring (remove placement bonuses)
+
+**Today (Dec 24):**
+- [ ] Artwork integration
+- [ ] 3-4 additional mini-games
+- [ ] Full playthrough testing
+
+**Christmas Eve/Day:**
+- [ ] Final polish
+- [ ] Remaining mini-games
+- [ ] Cloud deployment
+- [ ] Family testing
+
+---
+
+**Last Updated:** December 24, 2024
+**Status:** Screen architecture redesign in progress
