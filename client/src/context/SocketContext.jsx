@@ -16,10 +16,11 @@ export const SocketProvider = ({ children }) => {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    // Use the current host's hostname (works for both localhost and network IP)
-    const serverUrl = `${window.location.protocol}//${window.location.hostname}:3001`;
+    // Use environment variable for backend URL (supports both local and production)
+    const serverUrl = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:3001`;
+    console.log('Connecting to server:', serverUrl);
     const newSocket = io(serverUrl, {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
     });
 
     newSocket.on('connect', () => {
