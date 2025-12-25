@@ -292,10 +292,10 @@ export class StoryFlowEngine {
       round: this.currentRound,
       section: this.currentSection,
       completedSections: this.completedSections,
-      totalRounds: 15,
+      totalRounds: 25,
       totalSections: 5,
-      progress: Math.round((this.currentRound / 15) * 100),
-      starsEarned: this.completedSections * 3
+      progress: Math.round((this.currentRound / 25) * 100),
+      starsEarned: this.completedSections * 5
     };
   }
 

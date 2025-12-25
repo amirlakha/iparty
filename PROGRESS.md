@@ -603,4 +603,79 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 
 ---
 
-Last Updated: Dec 25, 2024 (Christmas Day Evening - All Mini-Games Complete)
+### Dec 25, 2024 - Christmas Day Session: Game Balance & UX Improvements
+
+**Major Changes:**
+
+- ✅ **Increased questions per section from 3 to 5**
+  - Total rounds: 15 → 25 (5 sections × 5 rounds each)
+  - Section 1: rounds 1-5, Section 2: rounds 6-10, Section 3: rounds 11-15, Section 4: rounds 16-20, Section 5: rounds 21-25
+  - Updated all round calculation logic in server and client
+  - **Files modified:**
+    - `server/utils/storyData.js` - Updated sections array and helper functions (divide by 5 instead of 3)
+    - `server/utils/flowCoordinator.js` - Updated totalRounds from 15 to 25, fixed progress calculation
+    - `server/utils/answerValidator.js` - Updated star calculation for 5 questions (need all 5 stars to pass)
+    - `server/index.js` - Fixed retry section logic (line 180: `* 3` → `* 5`)
+    - `client/src/data/christmasStory.js` - Updated progressMilestones (challengesPerSection: 5, totalChallenges: 25, starsPerSection: 5, totalStars: 25)
+    - `client/src/utils/storyFlowEngine.js` - Updated totalRounds and starsEarned calculation
+
+- ✅ **Updated star display and messaging**
+  - CoordinatorScreen now shows 5 stars instead of 3 on SECTION_COMPLETE screen
+  - Section intro screens updated: "Complete 3 challenges" → "Complete 5 challenges"
+  - Badge updated: "⭐⭐⭐ Required!" → "⭐⭐⭐⭐⭐ Required!"
+  - Changed messages from "NEED 3 STARS!" to "NEED 5 STARS!"
+  - **Files modified:**
+    - `client/src/pages/CoordinatorScreen.jsx` - Added 4th and 5th star displays
+    - `client/src/data/christmasStory.js` - Updated all section intro narratives
+    - `client/src/pages/ScreenPreview.jsx` - Updated badge text
+
+- ✅ **Updated victory message**
+  - Changed from "You Win!" to "You have saved Christmas"
+  - **File modified:** `client/src/pages/PlayerStoryScreen.jsx`
+
+- ✅ **Added proper retry messages for each section**
+  - Each section now has distinct success vs. retry messages
+  - Success messages (green title): Shown when earning all 5 stars
+  - Retry messages (red title): Shown when earning < 5 stars with encouraging narrative
+  - **Examples:**
+    - Section 1 retry: "Not Quite Fixed Yet! The toy machine is still sputtering and sparking!"
+    - Section 5 retry: "Sleigh Won't Launch! We need ALL 5 Magic Stars for enough power!"
+  - **Files modified:**
+    - `client/src/data/christmasStory.js` - Added retryMessage object to all 5 sections
+    - `client/src/pages/CoordinatorScreen.jsx` - Conditional rendering based on sectionStars
+
+**Bugs Fixed:**
+
+- ✅ **Critical retry bug** - Section 5 retry was sending players to Section 3 (round 13 instead of round 21)
+  - Root cause: `firstRound = (sectionId - 1) * 3 + 1` was using old formula
+  - Fix: Changed to `(sectionId - 1) * 5 + 1` in `server/index.js:180`
+  - Now correctly calculates: Section 1 → round 1, Section 2 → round 6, Section 3 → round 11, Section 4 → round 16, Section 5 → round 21
+
+- ✅ **Confusing success/retry messaging** - Success message shown even when failing
+  - Players would see "Sleigh Launching! You saved Christmas!" followed by "NEED 5 STARS! RETRYING..."
+  - Fix: Conditional display of successMessage vs retryMessage based on star count
+
+**Testing Results:**
+- ✅ Full section 5 playthrough tested (5 questions)
+- ✅ Section retry mechanism verified (correctly returns to first round of failed section)
+- ✅ Star display confirmed (shows 1-5 stars based on performance)
+- ✅ Victory message verified on player screens
+- ✅ Retry messages display correctly with appropriate narrative
+
+**Game Balance Rationale:**
+- 5 questions per section provides better pacing and more opportunities to earn stars
+- Increases total game length from 15 to 25 rounds for more engaging experience
+- Maintains cooperative team-based star system (1 star per question if ANY player answers correctly)
+- Section retry now more meaningful with longer sections
+
+**Next Session Priorities:**
+1. Full end-to-end playthrough (all 25 rounds, 5 sections)
+2. Test section retry flow from early sections
+3. Test victory screen after completing all 5 sections
+4. Add background music and ambiance system
+5. Cloud deployment (Vercel + Railway)
+6. Final polish and Christmas Day launch
+
+---
+
+Last Updated: Dec 25, 2024 (Christmas Day - Game Balance & UX Update)

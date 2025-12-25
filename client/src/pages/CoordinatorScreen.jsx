@@ -551,7 +551,7 @@ function CoordinatorScreen() {
                     <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-full inline-block shadow-2xl border-4 border-white"
                       style={{padding: 'clamp(1rem, 2.5vh, 1.75rem) clamp(1.5rem, 4vh, 3rem)'}}>
                       <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1rem, 2.5vh, 3rem)'}}>
-                        Section {currentSection}/5 • ⭐⭐⭐ Required!
+                        Section {currentSection}/5 • ⭐⭐⭐⭐⭐ Required!
                       </div>
                     </div>
                   </div>
@@ -1074,6 +1074,30 @@ function CoordinatorScreen() {
                   }}
                 />
               )}
+              {sectionStars >= 4 && (
+                <img
+                  src="/src/assets/images/star-icon.png"
+                  alt="Star"
+                  className="star-earned"
+                  style={{
+                    width: 'clamp(4rem, 12vh, 12rem)',
+                    height: 'clamp(4rem, 12vh, 12rem)',
+                    animationDelay: '0.6s'
+                  }}
+                />
+              )}
+              {sectionStars >= 5 && (
+                <img
+                  src="/src/assets/images/star-icon.png"
+                  alt="Star"
+                  className="star-earned"
+                  style={{
+                    width: 'clamp(4rem, 12vh, 12rem)',
+                    height: 'clamp(4rem, 12vh, 12rem)',
+                    animationDelay: '0.8s'
+                  }}
+                />
+              )}
             </div>
 
             {/* Glassmorphism panel */}
@@ -1096,27 +1120,42 @@ function CoordinatorScreen() {
                        pointerEvents: 'none'
                      }}></div>
                 <div className="relative z-10">
-                  <h2 className="font-black text-green-600" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
-                    {section.successMessage.title}
-                  </h2>
-                  {section.successMessage.narrative.map((line, i) => (
-                    <p key={i} className="text-gray-900 font-black leading-relaxed" style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.75rem, 2vh, 1.75rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
-                      {line}
-                    </p>
-                  ))}
+                  {sectionStars >= 5 ? (
+                    <>
+                      <h2 className="font-black text-green-600" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                        {section.successMessage.title}
+                      </h2>
+                      {section.successMessage.narrative.map((line, i) => (
+                        <p key={i} className="text-gray-900 font-black leading-relaxed" style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.75rem, 2vh, 1.75rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                          {line}
+                        </p>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="font-black text-red-600" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                        {section.retryMessage.title}
+                      </h2>
+                      {section.retryMessage.narrative.map((line, i) => (
+                        <p key={i} className="text-gray-900 font-black leading-relaxed" style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)', marginBottom: 'clamp(0.75rem, 2vh, 1.75rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                          {line}
+                        </p>
+                      ))}
+                    </>
+                  )}
 
-                  {sectionStars < 3 && (
+                  {sectionStars < 5 && (
                     <div style={{marginTop: 'clamp(1.5rem, 3vh, 3.5rem)'}}>
                       <div className="bg-gradient-to-r from-red-400 via-red-500 to-red-600 rounded-full inline-block shadow-xl mx-auto animate-pulse"
                            style={{padding: 'clamp(0.75rem, 2vh, 2rem) clamp(1.5rem, 4vh, 4rem)', border: '4px solid white'}}>
                         <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(1rem, 2.5vh, 2.5rem)'}}>
-                          NEED 3 STARS! RETRYING... 🔄
+                          NEED 5 STARS! RETRYING... 🔄
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {sectionStars >= 3 && (
+                  {sectionStars >= 5 && (
                     <div style={{marginTop: 'clamp(1.5rem, 3vh, 3.5rem)'}}>
                       <div className="bg-gradient-to-r from-orange-400 via-pink-500 to-blue-500 rounded-full inline-block shadow-xl mx-auto"
                            style={{padding: 'clamp(0.75rem, 2vh, 2rem) clamp(1.5rem, 4vh, 4rem)', border: '4px solid white'}}>

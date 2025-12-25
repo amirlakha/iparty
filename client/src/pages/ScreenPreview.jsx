@@ -393,7 +393,7 @@ function ScreenPreview() {
                         <div className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-full inline-block shadow-2xl border-4 border-white"
                           style={{padding: 'clamp(1rem, 2.5vh, 1.75rem) clamp(1.5rem, 4vh, 3rem)'}}>
                           <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1rem, 2.5vh, 3rem)'}}>
-                            Section {currentSection}/5 • ⭐⭐⭐ Required!
+                            Section {currentSection}/5 • ⭐⭐⭐⭐⭐ Required!
                           </div>
                         </div>
                       </div>

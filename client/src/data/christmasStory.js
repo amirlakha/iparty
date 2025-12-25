@@ -41,7 +41,7 @@ export const christmasStory = {
         narrative: [
           "The magical toy-making machine has stopped working!",
           "Without it, no presents will be ready for Christmas.",
-          "Complete 3 challenges to collect the Magic Stars needed to repair it!"
+          "Complete 5 challenges to collect the Magic Stars needed to repair it!"
         ],
         duration: 8000 // 8 seconds
       },
@@ -59,6 +59,16 @@ export const christmasStory = {
           "Toys are flowing down the conveyor belt!"
         ],
         duration: 5000 // 5 seconds
+      },
+
+      retryMessage: {
+        title: "Not Quite Fixed Yet!",
+        narrative: [
+          "The toy machine is still sputtering and sparking!",
+          "We need all 5 Magic Stars to repair it completely!",
+          "Let's try those challenges again!"
+        ],
+        duration: 5000
       }
     },
 
@@ -74,7 +84,7 @@ export const christmasStory = {
         narrative: [
           "Santa's reindeer are too weak to fly!",
           "They need special magical care to regain their strength.",
-          "Complete 3 challenges to help the reindeer prepare for the big flight!"
+          "Complete 5 challenges to help the reindeer prepare for the big flight!"
         ],
         duration: 8000
       },
@@ -92,6 +102,16 @@ export const christmasStory = {
           "Their antlers are shining bright!"
         ],
         duration: 5000
+      },
+
+      retryMessage: {
+        title: "Reindeer Still Too Weak!",
+        narrative: [
+          "The reindeer are looking tired and their glow is fading!",
+          "They need all 5 Magic Stars to fly properly!",
+          "Let's give them another boost of magic!"
+        ],
+        duration: 5000
       }
     },
 
@@ -107,7 +127,7 @@ export const christmasStory = {
         narrative: [
           "The gift wrapping machines have run out of magic!",
           "Mountains of unwrapped presents are piling up!",
-          "Complete 3 challenges to get the wrapping station working again!"
+          "Complete 5 challenges to get the wrapping station working again!"
         ],
         duration: 8000
       },
@@ -125,6 +145,16 @@ export const christmasStory = {
           "All the presents are beautifully wrapped!"
         ],
         duration: 5000
+      },
+
+      retryMessage: {
+        title: "Presents Still Unwrapped!",
+        narrative: [
+          "Oh no! There are still mountains of unwrapped gifts!",
+          "We need all 5 Magic Stars to get the station running!",
+          "Back to the wrapping table!"
+        ],
+        duration: 5000
       }
     },
 
@@ -140,7 +170,7 @@ export const christmasStory = {
         narrative: [
           "The cookie ovens have gone cold!",
           "Santa needs his special Christmas cookies for the long journey.",
-          "Complete 3 challenges to bake the perfect batch!"
+          "Complete 5 challenges to bake the perfect batch!"
         ],
         duration: 8000
       },
@@ -156,6 +186,16 @@ export const christmasStory = {
         narrative: [
           "Delicious! The smell of fresh cookies fills the air!",
           "Santa has all the energy he needs!"
+        ],
+        duration: 5000
+      },
+
+      retryMessage: {
+        title: "Cookies Are Burnt!",
+        narrative: [
+          "Uh oh! The cookies are too crispy and the oven is smoking!",
+          "Santa needs perfect cookies - all 5 Magic Stars worth!",
+          "Let's bake another batch!"
         ],
         duration: 5000
       }
@@ -190,6 +230,16 @@ export const christmasStory = {
           "INCREDIBLE! The sleigh is glowing with magic!",
           "The reindeer are lifting off!",
           "You saved Christmas! 🎄✨"
+        ],
+        duration: 5000
+      },
+
+      retryMessage: {
+        title: "Sleigh Won't Launch!",
+        narrative: [
+          "The sleigh is shaking but it won't lift off the ground!",
+          "We need ALL 5 Magic Stars for enough power!",
+          "Christmas is counting on us - one more try!"
         ],
         duration: 5000
       }
@@ -272,10 +322,10 @@ export const christmasStory = {
   // Progression tracking
   progressMilestones: {
     sections: 5,
-    challengesPerSection: 3,
-    totalChallenges: 15,
-    starsPerSection: 3,
-    totalStars: 15
+    challengesPerSection: 5,
+    totalChallenges: 25,
+    starsPerSection: 5,
+    totalStars: 25
   }
 };
 

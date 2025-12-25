@@ -646,7 +646,7 @@ function PlayerStoryScreen() {
                 <div className="text-center">
                   <div style={{fontSize: 'clamp(4rem, 8vh, 7rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)'}}>🏆</div>
                   <h3 className="font-black text-purple-600" style={{fontSize: 'clamp(2rem, 4vh, 3rem)', marginBottom: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
-                    You Win!
+                    You have saved Christmas
                   </h3>
                   <div className="font-black text-blue-600" style={{fontSize: 'clamp(3rem, 6vh, 6rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
                     {myScore}

@@ -143,7 +143,7 @@ function handleSectionComplete(roomCode, io) {
     reason: starResult.passed ? 'section-bonus' : 'section-penalty'
   });
 
-  // If section failed (< 3 stars), schedule retry
+  // If section failed (< 5 stars), schedule retry
   if (!starResult.passed) {
     console.log(`[${roomCode}] Section ${sectionId} FAILED - scheduling retry`);
 
@@ -177,7 +177,7 @@ function retrySection(roomCode, io) {
   });
 
   // Calculate first round of this section
-  const firstRound = (sectionId - 1) * 3 + 1;
+  const firstRound = (sectionId - 1) * 5 + 1;
 
   // Reset to first round of section
   flowCoordinator.currentRound = firstRound - 1; // Will be incremented by nextRound

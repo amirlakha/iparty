@@ -42,7 +42,7 @@ class FlowCoordinator {
       round: this.currentRound,
       section: this.currentSection,
       completedSections: this.completedSections,
-      totalRounds: 15,
+      totalRounds: 25,
       totalSections: 5,
       ...data
     });
@@ -173,7 +173,7 @@ class FlowCoordinator {
         break;
 
       case GameState.SECTION_COMPLETE:
-        if (this.currentRound >= 15) {
+        if (this.currentRound >= 25) {
           this.transitionTo(io, GameState.VICTORY);
         } else {
           this.transitionTo(io, GameState.MAP_TRANSITION);
@@ -196,12 +196,12 @@ class FlowCoordinator {
   nextRound(io) {
     this.currentRound++;
 
-    if (this.currentRound > 15) {
+    if (this.currentRound > 25) {
       this.transitionTo(io, GameState.VICTORY);
       return;
     }
 
-    this.currentSection = Math.floor((this.currentRound - 1) / 3) + 1;
+    this.currentSection = Math.floor((this.currentRound - 1) / 5) + 1;
 
     if (isFirstRoundInSection(this.currentRound)) {
       this.transitionTo(io, GameState.SECTION_INTRO, {
@@ -221,9 +221,9 @@ class FlowCoordinator {
       round: this.currentRound,
       section: this.currentSection,
       completedSections: this.completedSections,
-      totalRounds: 15,
+      totalRounds: 25,
       totalSections: 5,
-      progress: Math.round((this.currentRound / 15) * 100),
+      progress: Math.round((this.currentRound / 25) * 100),
       starsEarned: this.completedSections * 3
     };
   }

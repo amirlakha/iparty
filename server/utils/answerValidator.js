@@ -306,24 +306,24 @@ function gradeSubmissions(submissions, roundConfig) {
  * Calculate stars for a section based on team performance
  * NEW STAR SYSTEM:
  * - Each question awards 1 star if ANY player answers correctly
- * - 3 questions per section = 3 stars possible
- * - Need 3 stars to pass section
+ * - 5 questions per section = 5 stars possible
+ * - Need 5 stars to pass section
  *
  * @param {Array} sectionResults - Array of results for all challenges in section
  *   Each result should have: { questionNumber, isCorrect, playerId, ... }
  * @param {number} numPlayers - Total number of players
- * @returns {Object} - { stars: 0-3, passed: boolean, questionsCorrect: [bool, bool, bool] }
+ * @returns {Object} - { stars: 0-5, passed: boolean, questionsCorrect: [bool, bool, bool, bool, bool] }
  */
 function calculateSectionStars(sectionResults, numPlayers) {
-  // Group results by question (assume 3 questions: round 1, 2, 3 of section)
+  // Group results by question (assume 5 questions: round 1, 2, 3, 4, 5 of section)
   // Since we get all results for the section, we need to group by question
-  // Each section has 3 challenges, so split results into 3 groups
+  // Each section has 5 challenges, so split results into 5 groups
 
-  const questionsCorrect = [false, false, false];
-  const resultsPerQuestion = Math.ceil(sectionResults.length / 3);
+  const questionsCorrect = [false, false, false, false, false];
+  const resultsPerQuestion = Math.ceil(sectionResults.length / 5);
 
   // Check each question - if ANY player got it right, award star
-  for (let q = 0; q < 3; q++) {
+  for (let q = 0; q < 5; q++) {
     const questionResults = sectionResults.slice(
       q * resultsPerQuestion,
       (q + 1) * resultsPerQuestion
@@ -336,13 +336,13 @@ function calculateSectionStars(sectionResults, numPlayers) {
 
   // Count stars (1 per question that someone got right)
   const stars = questionsCorrect.filter(Boolean).length;
-  const passed = stars === 3; // Need all 3 stars to pass
+  const passed = stars === 5; // Need all 5 stars to pass
 
   return {
     stars,
     passed,
     questionsCorrect,
-    totalQuestions: 3
+    totalQuestions: 5
   };
 }
 

@@ -28,41 +28,41 @@ const sections = [
   {
     id: 1,
     name: "Toy Machine Workshop",
-    rounds: [1, 2, 3]
+    rounds: [1, 2, 3, 4, 5]
   },
   {
     id: 2,
     name: "Reindeer Stable",
-    rounds: [4, 5, 6]
+    rounds: [6, 7, 8, 9, 10]
   },
   {
     id: 3,
     name: "Gift Wrapping Station",
-    rounds: [7, 8, 9]
+    rounds: [11, 12, 13, 14, 15]
   },
   {
     id: 4,
     name: "Cookie Kitchen",
-    rounds: [10, 11, 12]
+    rounds: [16, 17, 18, 19, 20]
   },
   {
     id: 5,
     name: "Sleigh Launch Pad",
-    rounds: [13, 14, 15]
+    rounds: [21, 22, 23, 24, 25]
   }
 ];
 
 function getSectionByRound(roundNumber) {
-  const sectionIndex = Math.floor((roundNumber - 1) / 3);
+  const sectionIndex = Math.floor((roundNumber - 1) / 5);
   return sections[sectionIndex];
 }
 
 function isFirstRoundInSection(roundNumber) {
-  return roundNumber % 3 === 1;
+  return (roundNumber - 1) % 5 === 0;
 }
 
 function isLastRoundInSection(roundNumber) {
-  return roundNumber % 3 === 0;
+  return roundNumber % 5 === 0;
 }
 
 module.exports = {
