@@ -35,22 +35,39 @@ function handleChallengeActive(roomCode, io) {
 
   if (!game || !flowCoordinator) return;
 
-  // Generate new challenge
+  // Generate age-adaptive challenge with questions for each tier
   const challenge = generateChallenge(
     flowCoordinator.currentRound,
     flowCoordinator.currentSection,
-    game.medianAge || 10
+    game.players, // Pass players array for age-adaptive questions
+    'speed-math'
   );
 
   game.currentChallenge = challenge;
 
-  console.log(`[${roomCode}] Generated challenge for round ${flowCoordinator.currentRound}: ${challenge.question}`);
+  console.log(`[${roomCode}] Generated ${challenge.operation} challenge for round ${flowCoordinator.currentRound} with ${challenge.questions.length} age tiers`);
 
-  // Broadcast challenge to all players
-  io.to(roomCode).emit('challenge-data', {
+  // Broadcast full challenge to coordinator (TV shows all questions grouped by tier)
+  io.to(game.coordinator).emit('challenge-started', {
     challenge,
     round: flowCoordinator.currentRound,
     section: flowCoordinator.currentSection
+  });
+
+  // Send individual questions to each player (phone shows their specific question only)
+  challenge.questions.forEach(tierData => {
+    tierData.players.forEach(player => {
+      io.to(player.id).emit('challenge-data', {
+        challengeId: challenge.id,
+        round: flowCoordinator.currentRound,
+        section: flowCoordinator.currentSection,
+        question: tierData.question,
+        answer: tierData.answer, // Include for client validation if needed (will validate on server too)
+        operation: challenge.operation,
+        difficulty: challenge.difficulty,
+        timeLimit: challenge.timeLimit
+      });
+    });
   });
 }
 
@@ -413,9 +430,52 @@ function gradeAndAdvance(roomCode, io) {
   }
 
   const submissions = flowCoordinator.getSubmissions();
+  const challenge = game.currentChallenge;
 
-  // Grade all submissions
-  const results = gradeSubmissions(submissions, game.currentChallenge);
+  // Create a map of playerId -> their correct answer
+  const playerAnswers = new Map();
+  challenge.questions.forEach(tierData => {
+    tierData.players.forEach(player => {
+      playerAnswers.set(player.id, {
+        correctAnswer: tierData.answer,
+        question: tierData.question
+      });
+    });
+  });
+
+  // Grade each submission against their specific question
+  const results = submissions.map(sub => {
+    const playerData = playerAnswers.get(sub.playerId);
+    if (!playerData) {
+      console.error(`[${roomCode}] No question found for player ${sub.playerId}`);
+      return null;
+    }
+
+    // Validate answer
+    const isCorrect = parseInt(sub.answer) === playerData.correctAnswer;
+
+    return {
+      playerId: sub.playerId,
+      playerName: sub.playerName,
+      answer: sub.answer,
+      correctAnswer: playerData.correctAnswer,
+      question: playerData.question,
+      isCorrect,
+      timeSpent: sub.timeSpent,
+      placement: null, // Will be calculated below
+      points: 0 // Will be calculated below
+    };
+  }).filter(r => r !== null);
+
+  // Calculate placements based on speed (fastest correct answers)
+  const { calculatePlacements, calculatePoints } = require('./utils/answerValidator');
+  const placements = calculatePlacements(results);
+
+  // Assign placements and calculate points
+  results.forEach(result => {
+    result.placement = placements.get(result.playerId) || null;
+    result.points = calculatePoints(result.isCorrect, result.placement);
+  });
 
   // Store results for section star calculation
   game.sectionResults.push(...results);
@@ -437,11 +497,10 @@ function gradeAndAdvance(roomCode, io) {
 
   console.log(`[${roomCode}] Graded ${results.length} submissions`);
 
-  // Send results to all clients
+  // Send results to all clients (including each player's specific question and answer)
   io.to(roomCode).emit('challenge-results', {
     results,
     scores: game.scores,
-    correctAnswer: game.currentChallenge.correctAnswer,
     submissions: submissions.map(s => ({
       playerId: s.playerId,
       playerName: s.playerName,

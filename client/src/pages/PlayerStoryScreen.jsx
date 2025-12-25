@@ -17,6 +17,7 @@ function PlayerStoryScreen() {
   const [submitted, setSubmitted] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [result, setResult] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null); // Store player's specific question
 
   useEffect(() => {
     console.log('[PlayerStoryScreen] Component mounted/updated - VERSION 2.0');
@@ -35,6 +36,7 @@ function PlayerStoryScreen() {
         setSubmitted(false);
         setAnswer('');
         setResult(null);
+        setCurrentQuestion(null);
         setStartTime(Date.now());
       }
     });
@@ -45,7 +47,8 @@ function PlayerStoryScreen() {
     });
 
     socket.on('challenge-data', (data) => {
-      console.log('[PlayerStoryScreen] Challenge received:', data.challenge?.question || data.challenge?.prompt);
+      console.log('[PlayerStoryScreen] Challenge received:', data.question);
+      setCurrentQuestion(data.question);
       setStartTime(Date.now());
     });
 
@@ -154,15 +157,28 @@ function PlayerStoryScreen() {
                      }}></div>
 
                 <div className="relative z-10">
-                  {/* Instruction */}
+                  {/* Question Display */}
                   <div className="text-center" style={{marginBottom: 'clamp(1.5rem, 3vh, 3rem)'}}>
-                    <div style={{fontSize: 'clamp(3rem, 8vh, 6rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>📺</div>
-                    <h2 className="font-black text-purple-600" style={{fontSize: 'clamp(1.5rem, 3.5vh, 3rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
-                      Watch the TV!
-                    </h2>
-                    <p className="text-gray-900 font-bold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
-                      Answer the question below
-                    </p>
+                    <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>🧮</div>
+                    {currentQuestion ? (
+                      <>
+                        <h2 className="font-black text-gray-900" style={{fontSize: 'clamp(2rem, 5vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                          {currentQuestion} = ?
+                        </h2>
+                        <p className="text-purple-600 font-bold" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                          Enter your answer below
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="font-black text-purple-600" style={{fontSize: 'clamp(1.5rem, 3.5vh, 3rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                          Watch the TV!
+                        </h2>
+                        <p className="text-gray-900 font-bold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                          Loading question...
+                        </p>
+                      </>
+                    )}
                   </div>
 
                   {/* Answer Input */}

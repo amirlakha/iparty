@@ -49,8 +49,9 @@ function CoordinatorScreen() {
       setScores(data.game.scores);
     });
 
-    socket.on('challenge-data', (data) => {
+    socket.on('challenge-started', (data) => {
       setCurrentChallenge(data.challenge);
+      console.log('[Coordinator] Received challenge with', data.challenge.questions?.length, 'age tiers');
     });
 
     socket.on('answer-submitted', (data) => {
@@ -481,38 +482,51 @@ function CoordinatorScreen() {
                 <div className="relative z-10 text-center">
                   {currentChallenge ? (
                     <>
-                      <div style={{fontSize: 'clamp(2rem, 8vh, 6rem)', marginBottom: 'clamp(0.5rem, 1vh, 2rem)'}}>{currentChallenge.emoji || '🎮'}</div>
-                      <h2 className="font-black text-gray-900 leading-tight px-2"
+                      <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1.5rem)'}}>{currentChallenge.emoji || '🧮'}</div>
+                      <h3 className="font-black text-gray-900 leading-tight px-2 mb-4"
                           style={{
-                            fontSize: 'clamp(1.25rem, 4vh, 4rem)',
-                            marginBottom: 'clamp(1rem, 2vh, 3rem)',
+                            fontSize: 'clamp(1rem, 3vh, 2.5rem)',
                             textShadow: '0 2px 4px rgba(255,255,255,0.9)'
                           }}>
-                        {currentChallenge.question}
-                      </h2>
-                      {currentChallenge.options && (
-                        <div className="grid grid-cols-2 max-w-5xl mx-auto" style={{gap: 'clamp(0.5rem, 1vh, 1.5rem)'}}>
-                          {currentChallenge.options.map((option, i) => {
-                            const gradients = [
-                              'from-red-500 via-red-600 to-red-700',
-                              'from-blue-500 via-blue-600 to-blue-700',
-                              'from-green-500 via-green-600 to-green-700',
-                              'from-yellow-400 via-yellow-500 to-yellow-600'
-                            ];
-                            return (
-                              <div
-                                key={i}
-                                className={`bg-gradient-to-br ${gradients[i]} rounded-2xl border-white shadow-2xl hover:scale-110 transition-transform`}
-                                style={{
-                                  padding: 'clamp(0.75rem, 2vh, 2rem)',
-                                  borderWidth: 'clamp(2px, 0.5vh, 6px)'
-                                }}
-                              >
-                                <div className="font-black text-white drop-shadow-xl" style={{fontSize: 'clamp(1.25rem, 3vh, 3rem)'}}>{option}</div>
+                        Speed Math - {currentChallenge.operation?.charAt(0).toUpperCase() + currentChallenge.operation?.slice(1) || 'Challenge'}
+                      </h3>
+
+                      {/* Age-Adaptive Questions - Grouped by Tier */}
+                      {currentChallenge.questions && currentChallenge.questions.length > 0 ? (
+                        <div className="space-y-3 md:space-y-4 max-w-6xl mx-auto">
+                          {currentChallenge.questions.map((tierData, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl border-2 border-white/60 p-3 md:p-4 shadow-lg"
+                            >
+                              <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+                                {/* Player Names */}
+                                <div className="flex flex-wrap justify-center md:justify-start gap-1 md:gap-2 min-w-[30%]">
+                                  {tierData.players.map((player, pIdx) => (
+                                    <span
+                                      key={pIdx}
+                                      className="bg-yellow-400 text-gray-900 font-bold px-2 md:px-3 py-1 rounded-full shadow-md"
+                                      style={{fontSize: 'clamp(0.75rem, 1.5vh, 1.25rem)'}}
+                                    >
+                                      {player.name}
+                                    </span>
+                                  ))}
+                                </div>
+
+                                {/* Question */}
+                                <div className="font-black text-gray-900 flex-1 text-center"
+                                     style={{
+                                       fontSize: 'clamp(1.5rem, 4vh, 3.5rem)',
+                                       textShadow: '0 2px 4px rgba(255,255,255,0.9)'
+                                     }}>
+                                  {tierData.question} = ?
+                                </div>
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
+                      ) : (
+                        <div className="font-bold text-gray-900" style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)'}}>Loading questions...</div>
                       )}
                     </>
                   ) : (

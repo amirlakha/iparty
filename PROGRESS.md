@@ -432,12 +432,66 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 
 ---
 
-**Previous Session Priorities:**
-1. Continue with mini-game implementation (6 MVP games needed)
-2. Transfer prototype designs to actual CoordinatorScreen states
-3. Test full game flow end-to-end
-4. Polish and bug fixes
-5. Consider cloud deployment for final testing
+### Dec 25, 2024 - Christmas Day Morning Session
+
+**Focus:** Age-Adaptive Speed Math Implementation
+
+**Completed:**
+- ✅ **Complete age-adaptive question generation system**
+  - Created questionGenerator.js with 3 age tiers (7-9, 10-12, 13-17)
+  - 4 operations: Addition, Subtraction, Multiplication, Division
+  - 3 difficulty levels per operation: Easy, Medium, Hard
+  - Questions calibrated for relative difficulty parity across ages
+
+- ✅ **Server-side multi-tier challenge system**
+  - Groups players by age tier automatically
+  - Generates one question per active age tier
+  - Sends full challenge to coordinator (TV)
+  - Sends individual questions to each player (phone)
+  - Answer validation per player's specific question
+
+- ✅ **TV display with grouped questions (CoordinatorScreen)**
+  - Shows all questions with player names grouped by difficulty
+  - Example: "Sarah, Emma: 5 + 3 = ?" vs "Mike: 145 + 78 = ?"
+  - Clean glassmorphism design with color-coded player badges
+
+- ✅ **Phone display with individual questions (PlayerStoryScreen)**
+  - Each player sees their specific question prominently
+  - Large, readable math problem on their device
+  - No confusion about which question to answer
+
+- ✅ **Global speed-based competition (Option A)**
+  - All players compete together regardless of age
+  - 1st fastest = 30 pts, 2nd = 20 pts, 3rd+ = 10 pts
+  - Fair competition due to calibrated difficulty
+
+- ✅ **Bug fixes**
+  - Fixed scoring calculation (was awarding 0 points)
+  - Fixed placement and points calculation logic
+
+**Design Philosophy Implemented:**
+- **Same operation, different numbers**: If it's addition round, everyone gets addition
+- **Relative difficulty parity**: Easy for 7yo = Easy for 17yo (calibrated complexity)
+- **Fair competition**: Questions designed to take similar time across age groups
+
+**Files Modified:**
+- `server/utils/questionGenerator.js` - NEW: Age-adaptive question generation
+- `server/utils/challengeGenerator.js` - Updated to use age tiers
+- `server/index.js` - Multi-tier challenge handling and validation
+- `client/src/pages/CoordinatorScreen.jsx` - Grouped question display on TV
+- `client/src/pages/PlayerStoryScreen.jsx` - Individual question display on phone
+
+**Testing:**
+- ✅ Tested with 3 players of different ages
+- ✅ Questions generated appropriately for each age group
+- ✅ Scoring working correctly (placement-based points)
+- ✅ TV and phone displays working as designed
+
+**Next Session Priorities:**
+1. Implement remaining 5 mini-games (Trivia, True/False, Spelling, Pattern, Memory)
+2. Full end-to-end testing with multiple players
+3. Polish and bug fixes
+4. Cloud deployment (Vercel + Railway)
 
 ---
 
@@ -467,9 +521,10 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 - Autonomous = no manual host controls
 - Timer-based progression (8s, 60s, 5s, 3s)
 - Server validates ALL answers
-- Age-adaptive via median player age
+- Age-adaptive via age tier grouping (7-9, 10-12, 13-17)
+- Global speed competition across all ages
 - 6 MVP games minimum for Christmas launch
 
 ---
 
-Last Updated: Dec 24, 2024 (Christmas Eve Day - Player Screens Complete)
+Last Updated: Dec 25, 2024 (Christmas Day Morning - Age-Adaptive Speed Math Complete)
