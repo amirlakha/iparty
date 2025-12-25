@@ -277,24 +277,24 @@ function CoordinatorScreen() {
     if (currentSection === 0) return null;
     const backgrounds = [
       null,
-      '/images/bg-toy-machine.png',
-      '/images/bg-reindeer-stable.png',
-      '/images/bg-gift-wrap.png',
-      '/images/bg-cookie-kitchen.png',
-      '/images/bg-sleigh-launch.png'
+      '/src/assets/images/bg-toy-machine.png',
+      '/src/assets/images/bg-reindeer-stable.png',
+      '/src/assets/images/bg-gift-wrap.png',
+      '/src/assets/images/bg-cookie-kitchen.png',
+      '/src/assets/images/bg-sleigh-launch.png'
     ];
     return backgrounds[currentSection];
   };
 
   const getCharacterImage = () => {
-    if (currentSection === 0) return '/images/santa-character.png';
+    if (currentSection === 0) return '/src/assets/images/santa-character.png';
     const characters = [
       null,
-      '/images/elf-character.png',      // Toy Machine
-      '/images/reindeer-character.png', // Reindeer Stable
-      '/images/santa-character.png',    // Gift Wrap
-      '/images/elf-character.png',      // Cookie Kitchen
-      '/images/reindeer-character.png'  // Sleigh Launch
+      '/src/assets/images/elf-character.png',      // Toy Machine
+      '/src/assets/images/reindeer-character.png', // Reindeer Stable
+      '/src/assets/images/santa-character.png',    // Gift Wrap
+      '/src/assets/images/elf-character.png',      // Cookie Kitchen
+      '/src/assets/images/reindeer-character.png'  // Sleigh Launch
     ];
     return characters[currentSection];
   };
@@ -310,7 +310,7 @@ function CoordinatorScreen() {
       <div
         className="fixed inset-0 w-screen h-screen overflow-hidden"
         style={{
-          backgroundImage: 'url(/images/home-background.png)',
+          backgroundImage: 'url(/src/assets/images/home-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
@@ -323,7 +323,7 @@ function CoordinatorScreen() {
           {/* Header Section - Logo and Room Code */}
           <div className="text-center">
             <img
-              src="/images/game-logo.png"
+              src="/src/assets/images/game-logo.png"
               alt="iParty Logo"
               className="w-full max-w-xs md:max-w-md lg:max-w-lg mx-auto mb-2 md:mb-3 drop-shadow-2xl"
             />
@@ -417,7 +417,7 @@ function CoordinatorScreen() {
       <div
         className="fixed inset-0 w-screen h-screen overflow-hidden"
         style={{
-          backgroundImage: 'url(/images/home-background.png)',
+          backgroundImage: 'url(/src/assets/images/home-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
@@ -444,7 +444,7 @@ function CoordinatorScreen() {
             {/* Santa Character with circle + wiggle animation */}
             <div className="animate-circle mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
               <img
-                src="/images/santa-character.png"
+                src="/src/assets/images/santa-character.png"
                 alt="Santa"
                 className="animate-wiggle object-contain drop-shadow-2xl"
                 style={{width: '100%', height: '100%'}}
@@ -1156,7 +1156,7 @@ function CoordinatorScreen() {
           <div className="w-full max-w-7xl text-center flex flex-col items-center" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
             {/* Celebration burst with scale, fade, rotate animation */}
             <div className="mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
-              <img src="/images/celebration-burst.png" alt="Celebration"
+              <img src="/src/assets/images/celebration-burst.png" alt="Celebration"
                 className="animate-starburst object-contain drop-shadow-2xl"
                 style={{width: '100%', height: '100%'}} />
             </div>
@@ -1174,7 +1174,7 @@ function CoordinatorScreen() {
             <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(1rem, 3vh, 3rem)'}}>
               {sectionStars >= 1 && (
                 <img
-                  src="/images/star-icon.png"
+                  src="/src/assets/images/star-icon.png"
                   alt="Star"
                   className="star-earned"
                   style={{
@@ -1186,7 +1186,7 @@ function CoordinatorScreen() {
               )}
               {sectionStars >= 2 && (
                 <img
-                  src="/images/star-icon.png"
+                  src="/src/assets/images/star-icon.png"
                   alt="Star"
                   className="star-earned"
                   style={{
@@ -1198,7 +1198,7 @@ function CoordinatorScreen() {
               )}
               {sectionStars >= 3 && (
                 <img
-                  src="/images/star-icon.png"
+                  src="/src/assets/images/star-icon.png"
                   alt="Star"
                   className="star-earned"
                   style={{
@@ -1210,7 +1210,7 @@ function CoordinatorScreen() {
               )}
               {sectionStars >= 4 && (
                 <img
-                  src="/images/star-icon.png"
+                  src="/src/assets/images/star-icon.png"
                   alt="Star"
                   className="star-earned"
                   style={{
@@ -1222,7 +1222,7 @@ function CoordinatorScreen() {
               )}
               {sectionStars >= 5 && (
                 <img
-                  src="/images/star-icon.png"
+                  src="/src/assets/images/star-icon.png"
                   alt="Star"
                   className="star-earned"
                   style={{
@@ -1316,7 +1316,7 @@ function CoordinatorScreen() {
   if (gameState === 'MAP_TRANSITION') {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-        style={{backgroundImage: 'url(/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
         <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
           <div className="w-full max-w-7xl flex flex-col" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
@@ -1351,7 +1351,7 @@ function CoordinatorScreen() {
                        pointerEvents: 'none'
                      }}></div>
                 <div className="relative z-10 h-full">
-                  <img src="/images/village-map.png" alt="Village Map"
+                  <img src="/src/assets/images/village-map.png" alt="Village Map"
                     className="w-full h-full object-contain rounded-2xl" />
                 </div>
               </div>
@@ -1415,7 +1415,7 @@ function CoordinatorScreen() {
   if (gameState === 'VICTORY') {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-        style={{backgroundImage: 'url(/images/victory-scene.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        style={{backgroundImage: 'url(/src/assets/images/victory-scene.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <style>{`
           @keyframes circle {
             0% { transform: translate(0, -20px); }
@@ -1468,17 +1468,17 @@ function CoordinatorScreen() {
             {/* Characters with circle + wiggle animation */}
             <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(1rem, 2vh, 3rem)'}}>
               <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)'}}>
-                <img src="/images/santa-character.png" alt="Santa"
+                <img src="/src/assets/images/santa-character.png" alt="Santa"
                   className="object-contain animate-wiggle drop-shadow-2xl"
                   style={{width: '100%', height: '100%'}} />
               </div>
               <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)', animationDelay: '0.2s'}}>
-                <img src="/images/elf-character.png" alt="Elf"
+                <img src="/src/assets/images/elf-character.png" alt="Elf"
                   className="object-contain animate-wiggle drop-shadow-2xl"
                   style={{width: '100%', height: '100%'}} />
               </div>
               <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)', animationDelay: '0.4s'}}>
-                <img src="/images/reindeer-character.png" alt="Reindeer"
+                <img src="/src/assets/images/reindeer-character.png" alt="Reindeer"
                   className="object-contain animate-wiggle drop-shadow-2xl"
                   style={{width: '100%', height: '100%'}} />
               </div>

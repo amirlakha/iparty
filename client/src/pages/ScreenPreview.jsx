@@ -75,7 +75,7 @@ function ScreenPreview() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
               {/* Float (current) */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <img src="/images/santa-character.png" alt="Santa"
+                <img src="/src/assets/images/santa-character.png" alt="Santa"
                      className="w-32 h-32 mx-auto mb-4 animate-float"
                      style={{animation: 'float 3s ease-in-out infinite'}} />
                 <p className="text-white font-bold">Float (Current)</p>
@@ -84,21 +84,21 @@ function ScreenPreview() {
 
               {/* Wiggle */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <img src="/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-wiggle" />
+                <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-wiggle" />
                 <p className="text-white font-bold">Wiggle</p>
                 <p className="text-white/60 text-sm">Rotate left/right</p>
               </div>
 
               {/* Bounce Slow */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <img src="/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-bounce-slow" />
+                <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-bounce-slow" />
                 <p className="text-white font-bold">Bounce Slow</p>
                 <p className="text-white/60 text-sm">Bouncy up/down</p>
               </div>
 
               {/* Pulse Slow */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <img src="/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-pulse-slow" />
+                <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-pulse-slow" />
                 <p className="text-white font-bold">Pulse Slow</p>
                 <p className="text-white/60 text-sm">Fade in/out</p>
               </div>
@@ -106,7 +106,7 @@ function ScreenPreview() {
               {/* Float + Wiggle */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
                 <div className="animate-float mx-auto mb-4" style={{width: '128px', height: '128px'}}>
-                  <img src="/images/santa-character.png" alt="Santa" className="w-32 h-32 animate-wiggle" />
+                  <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-32 h-32 animate-wiggle" />
                 </div>
                 <p className="text-white font-bold">Float + Wiggle</p>
                 <p className="text-white/60 text-sm">Float & rotate</p>
@@ -115,7 +115,7 @@ function ScreenPreview() {
               {/* Float + Pulse */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
                 <div className="animate-float mx-auto mb-4" style={{width: '128px', height: '128px'}}>
-                  <img src="/images/santa-character.png" alt="Santa" className="w-32 h-32 animate-pulse-slow" />
+                  <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-32 h-32 animate-pulse-slow" />
                 </div>
                 <p className="text-white font-bold">Float + Pulse</p>
                 <p className="text-white/60 text-sm">Float & fade</p>
@@ -123,7 +123,7 @@ function ScreenPreview() {
 
               {/* Bounce */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
-                <img src="/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-bounce" />
+                <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-32 h-32 mx-auto mb-4 animate-bounce" />
                 <p className="text-white font-bold">Bounce</p>
                 <p className="text-white/60 text-sm">Fast bounce</p>
               </div>
@@ -131,7 +131,7 @@ function ScreenPreview() {
               {/* Circle + Wiggle */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center">
                 <div className="animate-circle mx-auto mb-4" style={{width: '128px', height: '128px'}}>
-                  <img src="/images/santa-character.png" alt="Santa" className="w-32 h-32 animate-wiggle" />
+                  <img src="/src/assets/images/santa-character.png" alt="Santa" className="w-32 h-32 animate-wiggle" />
                 </div>
                 <p className="text-white font-bold">Circle + Wiggle</p>
                 <p className="text-white/60 text-sm">Circle & rotate</p>
@@ -146,7 +146,7 @@ function ScreenPreview() {
           <div
             className="fixed inset-0 w-screen h-screen overflow-hidden"
             style={{
-              backgroundImage: 'url(/images/home-background.png)',
+              backgroundImage: 'url(/src/assets/images/home-background.png)',
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -157,7 +157,7 @@ function ScreenPreview() {
                 {/* Header with logo and room code */}
                 <div className="text-center flex-shrink-0">
                   <img
-                    src="/images/game-logo.png"
+                    src="/src/assets/images/game-logo.png"
                     alt="iParty Logo"
                     className="mx-auto drop-shadow-2xl object-contain"
                     style={{width: 'clamp(12rem, 25vw, 28rem)', marginBottom: 'clamp(0.5rem, 1vh, 0.75rem)'}}
@@ -223,7 +223,7 @@ function ScreenPreview() {
           <div
             className="fixed inset-0 w-screen h-screen overflow-hidden"
             style={{
-              backgroundImage: 'url(/images/home-background.png)',
+              backgroundImage: 'url(/src/assets/images/home-background.png)',
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -250,7 +250,7 @@ function ScreenPreview() {
                 {/* Santa Character */}
                 <div className="animate-circle mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
                   <img
-                    src="/images/santa-character.png"
+                    src="/src/assets/images/santa-character.png"
                     alt="Santa"
                     className="animate-wiggle object-contain drop-shadow-2xl"
                     style={{width: '100%', height: '100%'}}
@@ -316,7 +316,7 @@ function ScreenPreview() {
           <div
             className="fixed inset-0 w-screen h-screen overflow-hidden"
             style={{
-              backgroundImage: 'url(/images/bg-toy-machine.png)',
+              backgroundImage: 'url(/src/assets/images/bg-toy-machine.png)',
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -343,7 +343,7 @@ function ScreenPreview() {
                 {/* Character with Circle + Wiggle */}
                 <div className="animate-circle mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
                   <img
-                    src="/images/elf-character.png"
+                    src="/src/assets/images/elf-character.png"
                     alt="Character"
                     className="animate-wiggle object-contain drop-shadow-2xl"
                     style={{width: '100%', height: '100%'}}
@@ -411,7 +411,7 @@ function ScreenPreview() {
           <div
             className="fixed inset-0 w-screen h-screen overflow-hidden flex flex-col"
             style={{
-              backgroundImage: 'url(/images/bg-toy-machine.png)',
+              backgroundImage: 'url(/src/assets/images/bg-toy-machine.png)',
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -526,7 +526,7 @@ function ScreenPreview() {
           <div
             className="fixed inset-0 w-screen h-screen overflow-hidden flex flex-col"
             style={{
-              backgroundImage: 'url(/images/bg-toy-machine.png)',
+              backgroundImage: 'url(/src/assets/images/bg-toy-machine.png)',
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -640,7 +640,7 @@ function ScreenPreview() {
         // VERSION: Bold Modern with Glassmorphism
         return (
           <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-            style={{backgroundImage: 'url(/images/bg-toy-machine.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+            style={{backgroundImage: 'url(/src/assets/images/bg-toy-machine.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
             <style>{`
               @keyframes starburst {
                 0% {
@@ -665,7 +665,7 @@ function ScreenPreview() {
               <div className="w-full max-w-7xl text-center flex flex-col items-center" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
                 {/* Celebration burst with scale, fade, rotate animation */}
                 <div className="mx-auto flex-shrink-0" style={{width: 'clamp(6rem, 15vh, 16rem)', height: 'clamp(6rem, 15vh, 16rem)'}}>
-                  <img src="/images/celebration-burst.png" alt="Celebration"
+                  <img src="/src/assets/images/celebration-burst.png" alt="Celebration"
                     className="animate-starburst object-contain drop-shadow-2xl"
                     style={{width: '100%', height: '100%'}} />
                 </div>
@@ -734,7 +734,7 @@ function ScreenPreview() {
         // VERSION: Bold Modern with Glassmorphism
         return (
           <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-            style={{backgroundImage: 'url(/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+            style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
             <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
             <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-8 md:px-12 lg:px-16 py-[2vh] overflow-y-auto">
               <div className="w-full max-w-7xl flex flex-col" style={{maxHeight: '96vh', gap: 'clamp(0.5rem, 1.5vh, 1.5rem)'}}>
@@ -769,7 +769,7 @@ function ScreenPreview() {
                            pointerEvents: 'none'
                          }}></div>
                     <div className="relative z-10 h-full">
-                      <img src="/images/village-map.png" alt="Village Map"
+                      <img src="/src/assets/images/village-map.png" alt="Village Map"
                         className="w-full h-full object-contain rounded-2xl" />
                     </div>
                   </div>
@@ -828,7 +828,7 @@ function ScreenPreview() {
         // VERSION: Bold Modern with Glassmorphism
         return (
           <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-            style={{backgroundImage: 'url(/images/victory-scene.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+            style={{backgroundImage: 'url(/src/assets/images/victory-scene.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
             <style>{`
               @keyframes circle {
                 0% { transform: translate(0, -20px); }
@@ -881,17 +881,17 @@ function ScreenPreview() {
                 {/* Characters with circle + wiggle animation */}
                 <div className="flex justify-center items-center flex-shrink-0" style={{gap: 'clamp(1rem, 2vh, 3rem)'}}>
                   <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)'}}>
-                    <img src="/images/santa-character.png" alt="Santa"
+                    <img src="/src/assets/images/santa-character.png" alt="Santa"
                       className="object-contain animate-wiggle drop-shadow-2xl"
                       style={{width: '100%', height: '100%'}} />
                   </div>
                   <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)', animationDelay: '0.2s'}}>
-                    <img src="/images/elf-character.png" alt="Elf"
+                    <img src="/src/assets/images/elf-character.png" alt="Elf"
                       className="object-contain animate-wiggle drop-shadow-2xl"
                       style={{width: '100%', height: '100%'}} />
                   </div>
                   <div className="animate-circle" style={{width: 'clamp(4rem, 10vh, 12rem)', height: 'clamp(4rem, 10vh, 12rem)', animationDelay: '0.4s'}}>
-                    <img src="/images/reindeer-character.png" alt="Reindeer"
+                    <img src="/src/assets/images/reindeer-character.png" alt="Reindeer"
                       className="object-contain animate-wiggle drop-shadow-2xl"
                       style={{width: '100%', height: '100%'}} />
                   </div>
