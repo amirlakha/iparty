@@ -66,7 +66,7 @@ function Home() {
       <div
         className="fixed inset-0 w-screen h-screen overflow-hidden flex items-end justify-center pb-16"
         style={{
-          backgroundImage: 'url(/src/assets/images/home-background.png)',
+          backgroundImage: 'url(/images/home-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
@@ -78,7 +78,7 @@ function Home() {
         <div className="relative z-10 max-w-2xl w-full px-8 text-center">
           {/* Game Logo */}
           <img
-            src="/src/assets/images/game-logo.png"
+            src="/images/game-logo.png"
             alt="iParty Logo"
             className="w-full max-w-xl mx-auto mb-8 drop-shadow-2xl"
           />
@@ -112,7 +112,7 @@ function Home() {
       <div
         className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
         style={{
-          backgroundImage: 'url(/src/assets/images/home-background.png)',
+          backgroundImage: 'url(/images/home-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
@@ -174,7 +174,7 @@ function Home() {
     <div
       className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
       style={{
-        backgroundImage: 'url(/src/assets/images/home-background.png)',
+        backgroundImage: 'url(/images/home-background.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}

@@ -218,7 +218,7 @@ function PlayerStoryScreen() {
   if (!roomCode || !socket) {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
-        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        style={{backgroundImage: 'url(/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
         <div className="relative z-10 text-center">
           <div className="font-black text-white drop-shadow-2xl" style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)'}}>
@@ -233,7 +233,7 @@ function PlayerStoryScreen() {
   if (gameState === 'CHALLENGE_ACTIVE' && !submitted) {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        style={{backgroundImage: 'url(/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
         <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
@@ -586,7 +586,7 @@ function PlayerStoryScreen() {
   if (gameState === 'CHALLENGE_ACTIVE' && submitted) {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        style={{backgroundImage: 'url(/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
         <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
@@ -641,7 +641,7 @@ function PlayerStoryScreen() {
   if (gameState === 'CHALLENGE_RESULTS' && result) {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-        style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        style={{backgroundImage: 'url(/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
         <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
@@ -717,7 +717,7 @@ function PlayerStoryScreen() {
   // DEFAULT - "Watch the TV" for all other states
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden"
-      style={{backgroundImage: 'url(/src/assets/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+      style={{backgroundImage: 'url(/images/home-background.png)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
       <div className="relative z-10 h-full w-full flex flex-col justify-center items-center px-4 md:px-8 py-4">
