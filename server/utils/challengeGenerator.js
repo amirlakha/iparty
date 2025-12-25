@@ -10,10 +10,16 @@ const {
   generateSpellingRound
 } = require('./questionGenerator');
 
+const {
+  createBoard,
+  assignTeams,
+  getNextPlayer
+} = require('./connect4Logic');
+
 /**
  * Available game types
  */
-const GAME_TYPES = ['speed-math', 'true-false', 'trivia', 'spelling'];
+const GAME_TYPES = ['speed-math', 'true-false', 'trivia', 'spelling', 'connect4'];
 
 /**
  * Generate a challenge for all players
@@ -91,6 +97,28 @@ function generateChallenge(round, section, players, gameType = null) {
           caseSensitive: false,
           fuzzyMatch: false
         }
+      };
+    }
+
+    case 'connect4': {
+      const teams = assignTeams(players);
+      const board = createBoard();
+      const firstPlayer = getNextPlayer(teams, 0);
+
+      return {
+        ...baseChallenge,
+        type: 'connect4',
+        gameType: 'connect4',
+        timeLimit: 300000, // 5 minutes for full game
+        turnTimeLimit: 30000, // 30 seconds per turn
+        teams,
+        board,
+        moveCount: 0,
+        currentPlayer: firstPlayer,
+        winner: null,
+        isDraw: false,
+        answerType: 'interactive',
+        validationOptions: {}
       };
     }
 

@@ -28,6 +28,14 @@ function CoordinatorScreen() {
   const [spellingTimeRemaining, setSpellingTimeRemaining] = useState(0);
   const [currentListeningTier, setCurrentListeningTier] = useState(null);
 
+  // Connect 4 game state
+  const [connect4Board, setConnect4Board] = useState(null);
+  const [connect4CurrentPlayer, setConnect4CurrentPlayer] = useState(null);
+  const [connect4Winner, setConnect4Winner] = useState(null);
+  const [connect4WinningCells, setConnect4WinningCells] = useState([]);
+  const [connect4IsDraw, setConnect4IsDraw] = useState(false);
+  const [connect4Teams, setConnect4Teams] = useState(null);
+
   useEffect(() => {
     if (!socket || !roomCode) return;
 
@@ -84,6 +92,19 @@ function CoordinatorScreen() {
       setScores(data.scores);
     });
 
+    socket.on('connect4-update', (data) => {
+      console.log('[Connect4] Board updated:', data);
+      setConnect4Board(data.board);
+      setConnect4CurrentPlayer(data.currentPlayer);
+      setConnect4Winner(data.winner);
+      setConnect4WinningCells(data.winningCells || []);
+      setConnect4IsDraw(data.isDraw || false);
+      setConnect4Teams(data.teams);
+      if (data.scores) {
+        setScores(data.scores);
+      }
+    });
+
     return () => {
       socket.off('game-state-update');
       socket.off('player-joined');
@@ -93,6 +114,7 @@ function CoordinatorScreen() {
       socket.off('challenge-results');
       socket.off('section-stars');
       socket.off('scores-updated');
+      socket.off('connect4-update');
     };
   }, [socket, roomCode]);
 
@@ -228,6 +250,19 @@ function CoordinatorScreen() {
     return () => {
       window.speechSynthesis.cancel();
     };
+  }, [currentChallenge]);
+
+  // Initialize Connect 4 state when challenge starts
+  useEffect(() => {
+    if (currentChallenge && currentChallenge.gameType === 'connect4') {
+      console.log('[Connect4] Initializing Connect 4 game state');
+      setConnect4Board(currentChallenge.board);
+      setConnect4CurrentPlayer(currentChallenge.currentPlayer);
+      setConnect4Winner(null);
+      setConnect4WinningCells([]);
+      setConnect4IsDraw(false);
+      setConnect4Teams(currentChallenge.teams);
+    }
   }, [currentChallenge]);
 
   const handleStartGame = () => {
@@ -591,7 +626,10 @@ function CoordinatorScreen() {
                   <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
                     {section?.emoji} {section?.name} • Round {currentRound}
                   </div>
-                  <CircularTimer key={`challenge-${timerKey}`} duration={60} size="medium" />
+                  {/* Only show timer for non-Connect4 games */}
+                  {currentChallenge?.gameType !== 'connect4' && (
+                    <CircularTimer key={`challenge-${timerKey}`} duration={60} size="medium" />
+                  )}
                   <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
                     Section {currentSection}/5
                   </div>
@@ -601,9 +639,11 @@ function CoordinatorScreen() {
 
             {/* Challenge Area with Glassmorphism - flex-1 */}
             <div className="relative flex-1 min-h-0">
-              <div className="relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col justify-center overflow-y-auto border border-white/40"
+              <div className={`relative bg-white/30 backdrop-blur-xl rounded-3xl h-full flex flex-col justify-center border border-white/40 ${
+                currentChallenge?.gameType === 'connect4' ? 'overflow-hidden' : 'overflow-y-auto'
+              }`}
                    style={{
-                     padding: 'clamp(1rem, 3vh, 4rem)',
+                     padding: currentChallenge?.gameType === 'connect4' ? 'clamp(0.5rem, 1.5vh, 2rem)' : 'clamp(1rem, 3vh, 4rem)',
                      boxShadow: `
                        inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
                        inset 0 -1px 1px 0 rgba(255, 255, 255, 0.2),
@@ -621,26 +661,120 @@ function CoordinatorScreen() {
                 <div className="relative z-10 text-center">
                   {currentChallenge ? (
                     <>
-                      {/* Game Title and Icon */}
-                      <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1.5rem)'}}>
-                        {currentChallenge.gameType === 'speed-math' && '🧮'}
-                        {currentChallenge.gameType === 'true-false' && '✅'}
-                        {currentChallenge.gameType === 'trivia' && '🎯'}
-                        {currentChallenge.gameType === 'spelling' && '✏️'}
-                      </div>
-                      <h3 className="font-black text-gray-900 leading-tight px-2 mb-4"
-                          style={{
-                            fontSize: 'clamp(1rem, 3vh, 2.5rem)',
-                            textShadow: '0 2px 4px rgba(255,255,255,0.9)'
-                          }}>
-                        {currentChallenge.gameType === 'speed-math' && `Speed Math - ${currentChallenge.operation?.charAt(0).toUpperCase() + currentChallenge.operation?.slice(1)}`}
-                        {currentChallenge.gameType === 'true-false' && 'True or False'}
-                        {currentChallenge.gameType === 'trivia' && 'Christmas Trivia'}
-                        {currentChallenge.gameType === 'spelling' && 'Spelling Bee'}
-                      </h3>
+                      {/* Game Title and Icon - Only for non-Connect4 games */}
+                      {currentChallenge.gameType !== 'connect4' && (
+                        <>
+                          <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1.5rem)'}}>
+                            {currentChallenge.gameType === 'speed-math' && '🧮'}
+                            {currentChallenge.gameType === 'true-false' && '✅'}
+                            {currentChallenge.gameType === 'trivia' && '🎯'}
+                            {currentChallenge.gameType === 'spelling' && '✏️'}
+                          </div>
+                          <h3 className="font-black text-gray-900 leading-tight px-2 mb-4"
+                              style={{
+                                fontSize: 'clamp(1rem, 3vh, 2.5rem)',
+                                textShadow: '0 2px 4px rgba(255,255,255,0.9)'
+                              }}>
+                            {currentChallenge.gameType === 'speed-math' && `Speed Math - ${currentChallenge.operation?.charAt(0).toUpperCase() + currentChallenge.operation?.slice(1)}`}
+                            {currentChallenge.gameType === 'true-false' && 'True or False'}
+                            {currentChallenge.gameType === 'trivia' && 'Christmas Trivia'}
+                            {currentChallenge.gameType === 'spelling' && 'Spelling Bee'}
+                          </h3>
+                        </>
+                      )}
 
-                      {/* Age-Adaptive Questions - Grouped by Tier */}
-                      {currentChallenge.questions && currentChallenge.questions.length > 0 ? (
+                      {/* CONNECT 4 GAME */}
+                      {currentChallenge.gameType === 'connect4' && connect4Board ? (
+                        <div className="w-full h-full flex flex-col" style={{gap: 'clamp(0.25rem, 0.5vh, 0.5rem)'}}>
+                          {/* Compact Header: Icon + Title + Teams in one row */}
+                          <div className="flex items-center justify-between" style={{gap: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                            {/* Icon + Title */}
+                            <div className="flex items-center" style={{gap: 'clamp(0.25rem, 0.5vh, 0.5rem)'}}>
+                              <div style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}>🔴</div>
+                              <h3 className="font-black text-gray-900"
+                                  style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                Connect 4
+                              </h3>
+                            </div>
+
+                            {/* Inline Team Rosters */}
+                            <div className="flex" style={{gap: 'clamp(0.25rem, 0.5vh, 0.5rem)'}}>
+                              {/* Red Team - Compact */}
+                              <div className="bg-gradient-to-br from-red-500 to-red-700 rounded-lg"
+                                   style={{padding: 'clamp(0.25rem, 0.5vh, 0.5rem)'}}>
+                                <div className="font-bold text-white text-center"
+                                     style={{fontSize: 'clamp(0.75rem, 1.25vh, 1rem)'}}>
+                                  🔴 {connect4Teams?.red.map(p => p.name).join(', ')}
+                                </div>
+                              </div>
+
+                              {/* Blue Team - Compact */}
+                              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg"
+                                   style={{padding: 'clamp(0.25rem, 0.5vh, 0.5rem)'}}>
+                                <div className="font-bold text-white text-center"
+                                     style={{fontSize: 'clamp(0.75rem, 1.25vh, 1rem)'}}>
+                                  🔵 {connect4Teams?.blue.map(p => p.name).join(', ')}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Current Turn or Winner Display */}
+                          {connect4Winner ? (
+                            <div className={`rounded-xl text-center ${connect4Winner === 'red' ? 'bg-red-500' : 'bg-blue-500'}`}
+                                 style={{padding: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>
+                              <div className="font-black text-white"
+                                   style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}>
+                                {connect4Winner === 'red' ? '🔴' : '🔵'} {connect4Winner.toUpperCase()} WINS!
+                              </div>
+                            </div>
+                          ) : connect4IsDraw ? (
+                            <div className="bg-yellow-500 rounded-xl text-center"
+                                 style={{padding: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>
+                              <div className="font-black text-white"
+                                   style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}>
+                                🤝 DRAW!
+                              </div>
+                            </div>
+                          ) : connect4CurrentPlayer ? (
+                            <div className={`rounded-xl text-center ${connect4CurrentPlayer.team === 'red' ? 'bg-red-500' : 'bg-blue-500'}`}
+                                 style={{padding: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                              <div className="font-black text-white"
+                                   style={{fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}>
+                                {connect4CurrentPlayer.team === 'red' ? '🔴' : '🔵'} {connect4CurrentPlayer.playerName}'s Turn
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {/* Connect 4 Board */}
+                          <div className="flex justify-center items-center flex-1">
+                            <div className="bg-blue-900 rounded-2xl shadow-2xl"
+                                 style={{padding: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                              <div className="grid grid-cols-7" style={{gap: 'clamp(0.25rem, 0.5vh, 0.5rem)'}}>
+                                {connect4Board.map((row, rowIdx) => (
+                                  row.map((cell, colIdx) => {
+                                    const isWinningCell = connect4WinningCells.some(([r, c]) => r === rowIdx && c === colIdx);
+                                    return (
+                                      <div
+                                        key={`${rowIdx}-${colIdx}`}
+                                        className={`rounded-full border-2 ${
+                                          cell === 'red' ? 'bg-red-500 border-red-700' :
+                                          cell === 'blue' ? 'bg-blue-500 border-blue-700' :
+                                          'bg-white border-gray-300'
+                                        } ${isWinningCell ? 'animate-pulse ring-2 ring-yellow-400' : ''}`}
+                                        style={{
+                                          width: 'clamp(2rem, 5vh, 4rem)',
+                                          height: 'clamp(2rem, 5vh, 4rem)'
+                                        }}
+                                      ></div>
+                                    );
+                                  })
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : currentChallenge.questions && currentChallenge.questions.length > 0 ? (
                         <>
                           {/* SPELLING BEE: Single unified panel (not per-tier) */}
                           {currentChallenge.gameType === 'spelling' ? (

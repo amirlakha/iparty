@@ -678,4 +678,89 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 
 ---
 
-Last Updated: Dec 25, 2024 (Christmas Day - Game Balance & UX Update)
+### Dec 25, 2024 - Christmas Day Session: Connect 4 & Localization
+
+**Focus:** Team-Based Connect 4 Implementation & UK Localization
+
+**Completed:**
+
+- ✅ **Connect 4 game fully implemented**
+  - Team-based multiplayer (Red vs Blue)
+  - Automatic balanced team assignment
+  - Individual turn rotation alternating between teams (Player 1 Red → Player 1 Blue → Player 2 Red → Player 2 Blue...)
+  - 7×6 board with standard Connect 4 rules (4-in-a-row wins)
+  - Auto-timeout with fallback random moves (30 seconds per turn)
+  - Win detection: horizontal, vertical, diagonal
+  - Draw detection when board is full
+  - Scoring: Win = 30 points per team member, Loss = 0 points, Draw = 10 points each
+  - Responsive UI with clamp() sizing for board and pieces
+  - Real-time board updates via Socket.io
+  - No 60-second auto-advance timer (game runs until win/draw)
+  - **Files created:**
+    - `server/utils/connect4Logic.js` - Game logic, board state, win detection
+  - **Files modified:**
+    - `server/utils/challengeGenerator.js` - Added connect4 game type
+    - `server/index.js` - Connect 4 move handling, timeouts, scoring, timer cancellation
+    - `client/src/pages/CoordinatorScreen.jsx` - Board display on TV, team lists
+    - `client/src/pages/PlayerStoryScreen.jsx` - Team assignment, column controls
+
+- ✅ **Game type rotation system**
+  - All 5 game types now cycle in each section: speed-math, true-false, trivia, spelling, connect4
+  - Each section plays all 5 types (round 1 = speed-math, round 2 = true-false, etc.)
+  - Ensures variety and tests all game mechanics
+
+- ✅ **UI refinements for Connect 4**
+  - Compacted header to single row (icon, title, inline team lists)
+  - Changed overflow-y-auto to overflow-hidden for Connect 4 to prevent scrollbars
+  - Reduced padding specifically for Connect 4 to maximize board space
+  - Responsive board sizing with viewport units
+  - Removed CircularTimer from header for Connect 4 (turn timer only)
+
+- ✅ **Critical bug fix: Connect 4 star registration**
+  - **Problem:** Connect 4 wins/draws were NOT awarding stars for section progression
+    - Game would complete, award points correctly, but show "only 4 stars" and retry section
+    - Points were kept but section would restart
+  - **Root cause:** Star calculation expected `isCorrect` property but Connect 4 pushed `anyoneCorrect`
+    - `calculateSectionStars()` checks `questionResults.some(r => r.isCorrect)` but Connect 4 was using different property name
+  - **Fix:** Changed Connect 4 result to use `isCorrect: true` instead of `anyoneCorrect: true`
+  - **File modified:** `server/index.js` - Line 696 (gradeAndAdvance function)
+  - **Testing:** Verified Connect 4 now awards 1 star and section progression works correctly
+
+- ✅ **Complete UK localization of question sets**
+  - Replaced all US-specific content in True/False and Trivia questions
+  - **Changes made:**
+    - Currency: "dollars/cents" → "pounds/pence"
+    - Geography: US states/cities → UK countries/cities (London, Edinburgh, English Channel, Irish Sea, Ben Nevis)
+    - History: US presidents/events → British monarchs/events (Queen Victoria, Battle of Hastings 1066, Magna Carta 1215, Henry VIII, Great Fire of London 1666, Winston Churchill)
+    - Sports: American football → Rugby and Football (soccer)
+    - Measurements: Kept imperial (UK still uses some) alongside metric
+    - Removed: Thanksgiving references
+  - **Files modified:**
+    - `server/data/questionPools.js` - Updated ~50 questions across all age tiers
+  - All questions now appropriate for UK children
+
+**Technical Highlights:**
+
+- Connect 4 uses separate timer management (turn-based, not challenge-based)
+- Race condition fix with setTimeout to cancel auto-advance timer
+- Socket-based real-time board synchronization
+- Server-side game state management for Connect 4
+- Star system now consistent across all 5 game types
+
+**Testing Results:**
+- ✅ Connect 4 full playthrough tested (win, draw, timeout scenarios)
+- ✅ Star registration verified (Connect 4 now awards 1 star correctly)
+- ✅ Section progression fixed (no more infinite retries)
+- ✅ All 5 game types cycling correctly in sections
+- ✅ UI responsive and scrollbar-free
+
+**Next Session Priorities:**
+1. Full end-to-end playthrough (all 25 rounds, 5 sections with all 5 game types)
+2. Test section retry flow from early sections
+3. Test victory screen after completing all 5 sections
+4. Cloud deployment (Vercel + Railway)
+5. Final polish and Christmas Day launch
+
+---
+
+Last Updated: Dec 25, 2024 (Christmas Day - Connect 4 & Localization)

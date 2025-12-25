@@ -25,6 +25,13 @@ function PlayerStoryScreen() {
   const [spellingTimeRemaining, setSpellingTimeRemaining] = useState(0);
   const [currentListeningTier, setCurrentListeningTier] = useState(null);
 
+  // Connect 4 state
+  const [connect4MyTeam, setConnect4MyTeam] = useState(null); // 'red' or 'blue'
+  const [connect4CurrentPlayer, setConnect4CurrentPlayer] = useState(null);
+  const [connect4Winner, setConnect4Winner] = useState(null);
+  const [connect4IsDraw, setConnect4IsDraw] = useState(false);
+  const [connect4Teams, setConnect4Teams] = useState(null);
+
   useEffect(() => {
     console.log('[PlayerStoryScreen] Component mounted/updated - VERSION 2.0');
     console.log('[PlayerStoryScreen] Socket:', socket?.id, 'Room:', roomCode);
@@ -85,12 +92,44 @@ function PlayerStoryScreen() {
       setMyScore(data.scores[socket.id] || 0);
     });
 
+    socket.on('challenge-started', (data) => {
+      // Initialize Connect 4 state when game starts
+      if (data.challenge && data.challenge.gameType === 'connect4') {
+        console.log('[PlayerStoryScreen] Connect 4 challenge started');
+        const teams = data.challenge.teams;
+        // Determine which team this player is on
+        const isRed = teams.red.some(p => p.id === socket.id);
+        const myTeam = isRed ? 'red' : 'blue';
+        console.log(`[PlayerStoryScreen] I am on ${myTeam} team`);
+
+        setConnect4MyTeam(myTeam);
+        setConnect4CurrentPlayer(data.challenge.currentPlayer);
+        setConnect4Winner(null);
+        setConnect4IsDraw(false);
+        setConnect4Teams(teams);
+        setChallengeData(data.challenge); // Store challenge data
+      }
+    });
+
+    socket.on('connect4-update', (data) => {
+      console.log('[PlayerStoryScreen] Connect 4 board updated');
+      setConnect4CurrentPlayer(data.currentPlayer);
+      setConnect4Winner(data.winner);
+      setConnect4IsDraw(data.isDraw);
+      setConnect4Teams(data.teams);
+      if (data.scores) {
+        setMyScore(data.scores[socket.id] || 0);
+      }
+    });
+
     return () => {
       socket.off('game-state-update');
       socket.off('game-started');
       socket.off('challenge-data');
       socket.off('challenge-results');
       socket.off('scores-updated');
+      socket.off('challenge-started');
+      socket.off('connect4-update');
     };
   }, [socket, roomCode]);
 
@@ -165,6 +204,17 @@ function PlayerStoryScreen() {
     setSubmitted(true);
   };
 
+  const handleConnect4Move = (column) => {
+    if (!socket) return;
+
+    console.log(`[PlayerStoryScreen] Placing piece in column ${column}`);
+
+    socket.emit('connect4-move', {
+      roomCode,
+      column
+    });
+  };
+
   if (!roomCode || !socket) {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
@@ -228,18 +278,109 @@ function PlayerStoryScreen() {
                      }}></div>
 
                 <div className="relative z-10">
-                  {/* Question Display */}
-                  <div className="text-center" style={{marginBottom: 'clamp(1.5rem, 3vh, 3rem)'}}>
-                    {/* Icon based on game type */}
-                    <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>
-                      {challengeData?.operation && '🧮'}
-                      {challengeData?.options && '🎯'}
-                      {challengeData?.hint && '✏️'}
-                      {(!challengeData?.operation && !challengeData?.options && !challengeData?.hint && currentQuestion) && '✅'}
-                      {!currentQuestion && '📺'}
-                    </div>
+                  {/* CONNECT 4 GAME */}
+                  {challengeData?.gameType === 'connect4' ? (
+                    <div className="text-center">
+                      {/* Icon */}
+                      <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                        {connect4MyTeam === 'red' ? '🔴' : '🔵'}
+                      </div>
 
-                    {currentQuestion ? (
+                      {/* Team Assignment */}
+                      <div className={`rounded-2xl p-4 mb-6 ${connect4MyTeam === 'red' ? 'bg-red-500' : 'bg-blue-500'}`}>
+                        <div className="font-black text-white" style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)'}}>
+                          You are on {connect4MyTeam?.toUpperCase()} TEAM
+                        </div>
+                      </div>
+
+                      {/* Game Status */}
+                      {connect4Winner ? (
+                        <div className={`rounded-2xl p-6 mb-6 ${
+                          connect4Winner === connect4MyTeam ? 'bg-green-500' : 'bg-gray-500'
+                        }`}>
+                          <div className="font-black text-white" style={{fontSize: 'clamp(1.75rem, 4.5vh, 3.5rem)'}}>
+                            {connect4Winner === connect4MyTeam ? '🎉 YOUR TEAM WINS! 🎉' : 'You Lost'}
+                          </div>
+                          <div className="text-white font-bold mt-2" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)'}}>
+                            {connect4Winner === connect4MyTeam ? '+30 points' : '0 points'}
+                          </div>
+                        </div>
+                      ) : connect4IsDraw ? (
+                        <div className="bg-yellow-500 rounded-2xl p-6 mb-6">
+                          <div className="font-black text-white" style={{fontSize: 'clamp(1.75rem, 4.5vh, 3.5rem)'}}>
+                            🤝 IT'S A DRAW!
+                          </div>
+                          <div className="text-white font-bold mt-2" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)'}}>
+                            +10 points
+                          </div>
+                        </div>
+                      ) : connect4CurrentPlayer ? (
+                        <>
+                          {connect4CurrentPlayer.playerId === socket?.id ? (
+                            /* It's my turn */
+                            <div className="bg-green-500 rounded-2xl p-4 mb-4">
+                              <div className="font-black text-white animate-pulse" style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)'}}>
+                                YOUR TURN!
+                              </div>
+                              <div className="text-white font-bold mt-2" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)'}}>
+                                Choose a column
+                              </div>
+                            </div>
+                          ) : (
+                            /* Waiting for other player */
+                            <div className="bg-gray-600 rounded-2xl p-4 mb-4">
+                              <div className="font-black text-white" style={{fontSize: 'clamp(1.25rem, 3.5vh, 2.5rem)'}}>
+                                {connect4CurrentPlayer.playerName}'s Turn
+                              </div>
+                              <div className="text-white font-bold mt-2" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)'}}>
+                                Wait for your turn...
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : null}
+
+                      {/* Column Selector - Only show if it's my turn and game not ended */}
+                      {!connect4Winner && !connect4IsDraw && connect4CurrentPlayer?.playerId === socket?.id && (
+                        <div className="grid grid-cols-7 gap-2">
+                          {[0, 1, 2, 3, 4, 5, 6].map(col => (
+                            <button
+                              key={col}
+                              onClick={() => handleConnect4Move(col)}
+                              className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all"
+                              style={{
+                                padding: 'clamp(1rem, 3vh, 2rem)',
+                                fontSize: 'clamp(1.5rem, 4vh, 3rem)'
+                              }}
+                            >
+                              {col + 1}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Watch TV message if waiting */}
+                      {!connect4Winner && !connect4IsDraw && connect4CurrentPlayer?.playerId !== socket?.id && (
+                        <div className="text-gray-800 font-bold mt-6" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                          Watch the TV screen to see the game!
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* OTHER GAME TYPES */
+                    <>
+                      {/* Question Display */}
+                      <div className="text-center" style={{marginBottom: 'clamp(1.5rem, 3vh, 3rem)'}}>
+                        {/* Icon based on game type */}
+                        <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                          {challengeData?.operation && '🧮'}
+                          {challengeData?.options && '🎯'}
+                          {challengeData?.hint && '✏️'}
+                          {(!challengeData?.operation && !challengeData?.options && !challengeData?.hint && currentQuestion) && '✅'}
+                          {!currentQuestion && '📺'}
+                        </div>
+
+                        {currentQuestion ? (
                       <>
                         {/* Speed Math: show equation */}
                         {challengeData?.operation && (
@@ -405,25 +546,29 @@ function PlayerStoryScreen() {
                     </div>
                   )}
 
-                  {/* Submit Button - disabled during listen/pause phases */}
-                  <button
-                    onClick={handleSubmitAnswer}
-                    disabled={
-                      !answer ||
-                      (typeof answer === 'string' && !answer.trim()) ||
-                      (challengeData?.hint && spellingPhase !== 'answer')
-                    }
-                    className={`w-full rounded-2xl font-black shadow-2xl border-4 border-white transition-all ${
-                      (!answer || (typeof answer === 'string' && !answer.trim()) || (challengeData?.hint && spellingPhase !== 'answer'))
-                        ? 'bg-gray-400 cursor-not-allowed opacity-50'
-                        : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white active:scale-95'
-                    }`}
-                    style={{padding: 'clamp(1.25rem, 3vh, 2rem)', fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}
-                  >
-                    {challengeData?.hint && spellingPhase === 'listen' ? '🎧 Listening...' :
-                     challengeData?.hint && spellingPhase === 'pause' ? '⏸️ Get Ready...' :
-                     'Submit Answer'}
-                  </button>
+                  {/* Submit Button - disabled during listen/pause phases - Only for non-Connect4 games */}
+                  {challengeData?.gameType !== 'connect4' && (
+                    <button
+                      onClick={handleSubmitAnswer}
+                      disabled={
+                        !answer ||
+                        (typeof answer === 'string' && !answer.trim()) ||
+                        (challengeData?.hint && spellingPhase !== 'answer')
+                      }
+                      className={`w-full rounded-2xl font-black shadow-2xl border-4 border-white transition-all ${
+                        (!answer || (typeof answer === 'string' && !answer.trim()) || (challengeData?.hint && spellingPhase !== 'answer'))
+                          ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                          : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white active:scale-95'
+                      }`}
+                      style={{padding: 'clamp(1.25rem, 3vh, 2rem)', fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}
+                    >
+                      {challengeData?.hint && spellingPhase === 'listen' ? '🎧 Listening...' :
+                       challengeData?.hint && spellingPhase === 'pause' ? '⏸️ Get Ready...' :
+                       'Submit Answer'}
+                    </button>
+                  )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>

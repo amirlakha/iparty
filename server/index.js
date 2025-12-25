@@ -6,6 +6,13 @@ const FlowCoordinator = require('./utils/flowCoordinator');
 const { GameState } = require('./utils/storyData');
 const { gradeSubmissions, calculateSectionStars } = require('./utils/answerValidator');
 const { generateChallenge } = require('./utils/challengeGenerator');
+const {
+  placePiece,
+  checkWin,
+  isBoardFull,
+  getNextPlayer,
+  getRandomValidColumn
+} = require('./utils/connect4Logic');
 
 // ============================================================
 // DEVELOPMENT FLAG - Set game type for testing via environment variable
@@ -36,6 +43,174 @@ function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+// Connect 4 turn timers
+const connect4Timers = new Map();
+
+// Schedule auto-move if player doesn't respond in time
+function scheduleConnect4TurnTimeout(roomCode, io, turnTimeLimit) {
+  // Clear existing timer
+  if (connect4Timers.has(roomCode)) {
+    clearTimeout(connect4Timers.get(roomCode));
+  }
+
+  const timer = setTimeout(() => {
+    const game = games.get(roomCode);
+    if (!game || !game.currentChallenge || game.currentChallenge.gameType !== 'connect4') return;
+
+    const challenge = game.currentChallenge;
+    if (challenge.winner || challenge.isDraw) return;
+
+    console.log(`[${roomCode}] Turn timeout - auto-playing for ${challenge.currentPlayer.playerName}`);
+
+    // Auto-select random valid column
+    const col = getRandomValidColumn(challenge.board);
+    handleConnect4Move(roomCode, io, challenge.currentPlayer.playerId, col, true);
+  }, turnTimeLimit);
+
+  connect4Timers.set(roomCode, timer);
+}
+
+// Handle Connect 4 move
+function handleConnect4Move(roomCode, io, playerId, col, isAutoMove = false) {
+  const game = games.get(roomCode);
+  if (!game || !game.currentChallenge || game.currentChallenge.gameType !== 'connect4') return;
+
+  const challenge = game.currentChallenge;
+
+  // Check if game already ended
+  if (challenge.winner || challenge.isDraw) return;
+
+  // Validate it's this player's turn
+  if (challenge.currentPlayer.playerId !== playerId) {
+    console.warn(`[${roomCode}] Invalid turn - expected ${challenge.currentPlayer.playerName}, got ${playerId}`);
+    return;
+  }
+
+  // Place piece
+  const result = placePiece(challenge.board, col, challenge.currentPlayer.team);
+  if (!result.success) {
+    console.warn(`[${roomCode}] Invalid move - column ${col} is full`);
+    return;
+  }
+
+  // Update board
+  challenge.board = result.board;
+  challenge.moveCount++;
+
+  console.log(`[${roomCode}] ${challenge.currentPlayer.playerName} (${challenge.currentPlayer.team}) placed at column ${col} ${isAutoMove ? '(AUTO)' : ''}`);
+
+  // Check for win
+  const winResult = checkWin(challenge.board, result.row, col);
+  if (winResult.winner) {
+    challenge.winner = winResult.winner;
+    challenge.winningCells = winResult.winningCells;
+    console.log(`[${roomCode}] ${winResult.winner.toUpperCase()} TEAM WINS!`);
+
+    // Award points to winning team
+    const winningTeam = challenge.teams[winResult.winner];
+    winningTeam.forEach(player => {
+      if (!game.scores[player.id]) game.scores[player.id] = 0;
+      game.scores[player.id] += 30;
+      console.log(`  ${player.name}: +30 points (total: ${game.scores[player.id]})`);
+    });
+
+    // Broadcast game end
+    io.to(roomCode).emit('connect4-update', {
+      board: challenge.board,
+      currentPlayer: null,
+      winner: challenge.winner,
+      winningCells: challenge.winningCells,
+      teams: challenge.teams,
+      scores: game.scores
+    });
+
+    // Clear turn timer
+    if (connect4Timers.has(roomCode)) {
+      clearTimeout(connect4Timers.get(roomCode));
+      connect4Timers.delete(roomCode);
+    }
+
+    // End challenge after 3 seconds
+    setTimeout(() => {
+      endConnect4Challenge(roomCode, io);
+    }, 3000);
+
+    return;
+  }
+
+  // Check for draw
+  if (isBoardFull(challenge.board)) {
+    challenge.isDraw = true;
+    console.log(`[${roomCode}] DRAW - Board full with no winner`);
+
+    // Award draw points to all players
+    game.players.forEach(player => {
+      if (!game.scores[player.id]) game.scores[player.id] = 0;
+      game.scores[player.id] += 10;
+      console.log(`  ${player.name}: +10 points (draw) (total: ${game.scores[player.id]})`);
+    });
+
+    // Broadcast game end
+    io.to(roomCode).emit('connect4-update', {
+      board: challenge.board,
+      currentPlayer: null,
+      winner: null,
+      isDraw: true,
+      teams: challenge.teams,
+      scores: game.scores
+    });
+
+    // Clear turn timer
+    if (connect4Timers.has(roomCode)) {
+      clearTimeout(connect4Timers.get(roomCode));
+      connect4Timers.delete(roomCode);
+    }
+
+    // End challenge after 3 seconds
+    setTimeout(() => {
+      endConnect4Challenge(roomCode, io);
+    }, 3000);
+
+    return;
+  }
+
+  // Get next player
+  challenge.currentPlayer = getNextPlayer(challenge.teams, challenge.moveCount);
+
+  // Broadcast updated game state
+  io.to(roomCode).emit('connect4-update', {
+    board: challenge.board,
+    currentPlayer: challenge.currentPlayer,
+    winner: null,
+    teams: challenge.teams,
+    moveCount: challenge.moveCount
+  });
+
+  // Schedule timeout for next turn
+  scheduleConnect4TurnTimeout(roomCode, io, challenge.turnTimeLimit);
+}
+
+// End Connect 4 challenge and advance to results
+function endConnect4Challenge(roomCode, io) {
+  const game = games.get(roomCode);
+  const flowCoordinator = flowCoordinators.get(roomCode);
+  if (!game || !flowCoordinator) return;
+
+  console.log(`[${roomCode}] Connect 4 challenge ended - advancing to results`);
+
+  // Mark as completed (1 star - challenge finished)
+  flowCoordinator.recordSubmission('connect4-complete', { completed: true });
+
+  // Broadcast scores update
+  io.to(roomCode).emit('scores-updated', {
+    scores: game.scores,
+    reason: 'connect4-complete'
+  });
+
+  // Advance to results
+  gradeAndAdvance(roomCode, io);
+}
+
 // Generate and broadcast challenge when entering CHALLENGE_ACTIVE state
 function handleChallengeActive(roomCode, io) {
   const game = games.get(roomCode);
@@ -43,16 +218,57 @@ function handleChallengeActive(roomCode, io) {
 
   if (!game || !flowCoordinator) return;
 
-  // Generate age-adaptive challenge with questions for each tier
-  // DEV_GAME_TYPE: Set at top of file for testing, or null for random
+  // Determine game type: cycle through all 5 types in each section
+  // Each section has 5 rounds, so rounds 1-5 in section get one of each game type
+  let gameType = DEV_GAME_TYPE; // Use dev override if set
+
+  if (!gameType) {
+    // Cycle through game types: each section plays all 5 types
+    const gameTypes = ['speed-math', 'true-false', 'trivia', 'spelling', 'connect4'];
+    const roundInSection = ((flowCoordinator.currentRound - 1) % 5); // 0-4
+    gameType = gameTypes[roundInSection];
+    console.log(`[${roomCode}] Round ${flowCoordinator.currentRound}, Section ${flowCoordinator.currentSection}, Round in section: ${roundInSection + 1}/5, Game type: ${gameType}`);
+  }
+
+  // Generate age-adaptive challenge with determined game type
   const challenge = generateChallenge(
     flowCoordinator.currentRound,
     flowCoordinator.currentSection,
     game.players, // Pass players array for age-adaptive questions
-    DEV_GAME_TYPE  // null = random, or specify: 'speed-math', 'true-false', 'trivia', 'spelling'
+    gameType
   );
 
   game.currentChallenge = challenge;
+
+  // Handle Connect 4 differently (no individual questions, shared game state)
+  if (challenge.gameType === 'connect4') {
+    console.log(`[${roomCode}] Generated Connect 4 challenge for round ${flowCoordinator.currentRound}`);
+    console.log(`  Red Team: ${challenge.teams.red.map(p => p.name).join(', ')}`);
+    console.log(`  Blue Team: ${challenge.teams.blue.map(p => p.name).join(', ')}`);
+    console.log(`  First player: ${challenge.currentPlayer.playerName} (${challenge.currentPlayer.team})`);
+
+    // IMPORTANT: Cancel the flowCoordinator's 60s auto-advance timer for Connect 4
+    // Connect 4 manages its own game ending logic (win/draw/turn timeouts)
+    // Use setTimeout to ensure this runs AFTER flowCoordinator.handleStateEntry sets the timer
+    setTimeout(() => {
+      if (flowCoordinator.autoAdvanceTimer) {
+        clearTimeout(flowCoordinator.autoAdvanceTimer);
+        flowCoordinator.autoAdvanceTimer = null;
+        console.log(`[${roomCode}] Cancelled auto-advance timer for Connect 4`);
+      }
+    }, 100); // Small delay to ensure timer exists before we cancel it
+
+    // Broadcast full challenge to coordinator and all players
+    io.to(roomCode).emit('challenge-started', {
+      challenge,
+      round: flowCoordinator.currentRound,
+      section: flowCoordinator.currentSection
+    });
+
+    // Start turn timer for first player
+    scheduleConnect4TurnTimeout(roomCode, io, challenge.turnTimeLimit);
+    return;
+  }
 
   console.log(`[${roomCode}] Generated ${challenge.gameType} challenge for round ${flowCoordinator.currentRound} with ${challenge.questions.length} age tiers`);
 
@@ -415,6 +631,11 @@ io.on('connection', (socket) => {
     io.to(roomCode).emit('spelling-phase-change', { phase, duration });
   });
 
+  // Handle Connect 4 move
+  socket.on('connect4-move', ({ roomCode, column }) => {
+    handleConnect4Move(roomCode, io, socket.id, column, false);
+  });
+
   // Disconnect
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
@@ -462,6 +683,33 @@ function gradeAndAdvance(roomCode, io) {
 
   const submissions = flowCoordinator.getSubmissions();
   const challenge = game.currentChallenge;
+
+  // Handle Connect 4 specially - no grading needed, scoring already done
+  if (challenge.gameType === 'connect4') {
+    console.log(`[${roomCode}] Connect 4 complete - skipping grading, advancing to results`);
+
+    // Add Connect 4 result to sectionResults for star calculation
+    // Connect 4 always awards 1 star (someone won or drew, challenge completed)
+    // Push a result with isCorrect: true to match the expected format
+    game.sectionResults.push({
+      roundNumber: flowCoordinator.currentRound,
+      isCorrect: true, // Always true for Connect 4 (challenge completed)
+      playerId: 'connect4-game',
+      gameType: 'connect4'
+    });
+
+    console.log(`[${roomCode}] Added Connect 4 to section results (round ${flowCoordinator.currentRound})`);
+
+    // Broadcast results (empty results array since there are no individual question results)
+    io.to(roomCode).emit('challenge-results', {
+      results: [],
+      scores: game.scores
+    });
+
+    // Transition to results display
+    flowCoordinator.transitionTo(io, 'CHALLENGE_RESULTS');
+    return;
+  }
 
   // Create a map of playerId -> their correct answer
   const playerAnswers = new Map();
