@@ -542,6 +542,10 @@ function PlayerStoryScreen() {
                         onKeyPress={(e) => e.key === 'Enter' && handleSubmitAnswer()}
                         autoFocus
                         disabled={challengeData?.hint && spellingPhase !== 'answer'}
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
                       />
                     </div>
                   )}
