@@ -69,7 +69,7 @@ function Lobby() {
     <div
       className="min-h-screen flex flex-col p-4"
       style={{
-        backgroundImage: 'url(/src/assets/images/home-background.png)',
+        backgroundImage: 'url(/images/home-background.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}
