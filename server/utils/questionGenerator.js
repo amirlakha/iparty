@@ -378,10 +378,157 @@ function generateSpeedMathRound(players, operation = null, difficulty = null) {
   };
 }
 
+/**
+ * =================================================================
+ * TRUE/FALSE GAME
+ * =================================================================
+ */
+
+const { trueFalseQuestions, triviaQuestions, spellingWords, getRandomQuestion } = require('../data/questionPools');
+
+/**
+ * Generate True/False round for all active age tiers
+ */
+function generateTrueFalseRound(players) {
+  const groupedPlayers = groupPlayersByAgeTier(players);
+  const questions = [];
+
+  Object.keys(groupedPlayers).forEach(tier => {
+    if (groupedPlayers[tier].length > 0) {
+      const questionData = getRandomQuestion(trueFalseQuestions[tier]);
+
+      questions.push({
+        tier,
+        question: questionData.question,
+        answer: questionData.answer,
+        answerType: 'boolean',
+        players: groupedPlayers[tier].map(p => ({
+          id: p.id,
+          name: p.name,
+          age: p.age
+        }))
+      });
+    }
+  });
+
+  return {
+    gameType: 'true-false',
+    questions
+  };
+}
+
+/**
+ * =================================================================
+ * MULTIPLE CHOICE TRIVIA GAME
+ * =================================================================
+ */
+
+/**
+ * Generate Multiple Choice Trivia round for all active age tiers
+ */
+function generateTriviaRound(players) {
+  const groupedPlayers = groupPlayersByAgeTier(players);
+  const questions = [];
+
+  Object.keys(groupedPlayers).forEach(tier => {
+    if (groupedPlayers[tier].length > 0) {
+      const questionData = getRandomQuestion(triviaQuestions[tier]);
+
+      questions.push({
+        tier,
+        question: questionData.question,
+        options: questionData.options,
+        answer: questionData.answer,
+        answerType: 'multiple-choice',
+        players: groupedPlayers[tier].map(p => ({
+          id: p.id,
+          name: p.name,
+          age: p.age
+        }))
+      });
+    }
+  });
+
+  return {
+    gameType: 'trivia',
+    questions
+  };
+}
+
+/**
+ * =================================================================
+ * SPELLING BEE GAME (Audio-based)
+ * =================================================================
+ */
+
+/**
+ * Generate Spelling Bee round for all active age tiers
+ *
+ * Flow:
+ * - Phase 1 (Listen): Each tier hears their word pronounced 2x (sequential)
+ * - Phase 2 (Pause): 10 second thinking pause
+ * - Phase 3 (Answer): 30 seconds to type and submit
+ */
+function generateSpellingRound(players) {
+  const groupedPlayers = groupPlayersByAgeTier(players);
+  const questions = [];
+
+  // Define tier order for sequential pronunciation
+  const tierOrder = ['young', 'middle', 'teen'];
+
+  tierOrder.forEach(tier => {
+    if (groupedPlayers[tier] && groupedPlayers[tier].length > 0) {
+      const wordData = getRandomQuestion(spellingWords[tier]);
+
+      questions.push({
+        tier,
+        word: wordData.word, // Actual word to spell (for pronunciation & validation)
+        hint: wordData.hint, // Helpful context
+        question: `Spell the word you heard`, // Display text
+        answer: wordData.word.toLowerCase(),
+        answerType: 'text',
+        validationOptions: {
+          caseSensitive: false,
+          fuzzyMatch: false
+        },
+        // Speech synthesis settings per age tier
+        speechRate: tier === 'young' ? 0.75 : tier === 'middle' ? 0.85 : 0.9,
+        repeatCount: 2, // How many times to pronounce
+        players: groupedPlayers[tier].map(p => ({
+          id: p.id,
+          name: p.name,
+          age: p.age
+        }))
+      });
+    }
+  });
+
+  return {
+    gameType: 'spelling',
+    questions,
+    // Timing configuration
+    phases: {
+      listen: {
+        duration: questions.length * 8000, // ~8 seconds per tier (2x pronunciation + gaps)
+        tierOrder: tierOrder.filter(t => groupedPlayers[t] && groupedPlayers[t].length > 0)
+      },
+      pause: {
+        duration: 10000 // 10 seconds
+      },
+      answer: {
+        duration: 30000 // 30 seconds
+      }
+    }
+  };
+}
+
 module.exports = {
   getAgeTier,
   groupPlayersByAgeTier,
   generateSpeedMathQuestion,
   generateSpeedMathRound,
+  generateTrueFalseRound,
+  generateTriviaRound,
+  generateSpellingRound,
   AGE_TIERS
 };

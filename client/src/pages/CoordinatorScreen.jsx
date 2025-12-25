@@ -23,6 +23,11 @@ function CoordinatorScreen() {
   const [sectionStars, setSectionStars] = useState(0);
   const [timerKey, setTimerKey] = useState(0); // Force timer reset on state change
 
+  // Spelling Bee audio state (TV plays audio for everyone)
+  const [spellingPhase, setSpellingPhase] = useState(null); // 'listen', 'pause', 'answer'
+  const [spellingTimeRemaining, setSpellingTimeRemaining] = useState(0);
+  const [currentListeningTier, setCurrentListeningTier] = useState(null);
+
   useEffect(() => {
     if (!socket || !roomCode) return;
 
@@ -90,6 +95,140 @@ function CoordinatorScreen() {
       socket.off('scores-updated');
     };
   }, [socket, roomCode]);
+
+  // Spelling Bee Audio Flow: TV plays audio for everyone to hear
+  useEffect(() => {
+    console.log('[SpellingBee TV] useEffect triggered - currentChallenge:', currentChallenge?.gameType, 'has phases:', !!currentChallenge?.phases);
+
+    if (!currentChallenge || currentChallenge.gameType !== 'spelling' || !currentChallenge.phases) {
+      console.log('[SpellingBee TV] Skipping - not a spelling bee or no phases');
+      return;
+    }
+
+    console.log('[SpellingBee TV] Starting 3-phase flow');
+    console.log('[SpellingBee TV] Questions:', currentChallenge.questions);
+    console.log('[SpellingBee TV] Phases:', currentChallenge.phases);
+
+    const phases = currentChallenge.phases;
+    const tierOrder = phases.listen.tierOrder;
+
+    // Wait for voices to be loaded
+    const loadVoices = () => {
+      return new Promise((resolve) => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          console.log('[SpellingBee TV] Voices loaded:', voices.length);
+          resolve(voices);
+        } else {
+          console.log('[SpellingBee TV] Waiting for voices...');
+          window.speechSynthesis.onvoiceschanged = () => {
+            const newVoices = window.speechSynthesis.getVoices();
+            console.log('[SpellingBee TV] Voices loaded:', newVoices.length);
+            resolve(newVoices);
+          };
+        }
+      });
+    };
+
+    // Helper function to speak a word
+    const speakWord = (word, rate = 0.85) => {
+      return new Promise((resolve) => {
+        console.log(`[SpellingBee TV] Speaking: "${word}" at rate ${rate}`);
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.rate = rate;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        utterance.onstart = () => console.log(`[SpellingBee TV] Started: "${word}"`);
+        utterance.onend = () => {
+          console.log(`[SpellingBee TV] Finished: "${word}"`);
+          resolve();
+        };
+        utterance.onerror = (event) => {
+          console.error('[SpellingBee TV] Error:', event);
+          resolve();
+        };
+        window.speechSynthesis.speak(utterance);
+      });
+    };
+
+    // Phase 1: LISTEN - Sequential pronunciation by tier
+    const runListenPhase = async () => {
+      setSpellingPhase('listen');
+      console.log('[SpellingBee TV] Phase 1: LISTEN');
+
+      // Broadcast phase change to players
+      console.log('[SpellingBee TV] Emitting phase change: listen to room:', roomCode);
+      socket.emit('spelling-phase-change', { roomCode, phase: 'listen' });
+
+      await loadVoices();
+
+      for (const tier of tierOrder) {
+        setCurrentListeningTier(tier);
+        console.log(`[SpellingBee TV] Now playing: ${tier} tier`);
+
+        const tierData = currentChallenge.questions.find(q => q.tier === tier);
+        if (tierData && tierData.word) {
+          console.log(`[SpellingBee TV] Word for ${tier}: "${tierData.word}"`);
+          await speakWord(tierData.word, tierData.speechRate || 0.85);
+          await new Promise(resolve => setTimeout(resolve, 800));
+          await speakWord(tierData.word, tierData.speechRate || 0.85);
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
+
+      setCurrentListeningTier(null);
+      runPausePhase();
+    };
+
+    // Phase 2: PAUSE - 10 second thinking time
+    const runPausePhase = () => {
+      setSpellingPhase('pause');
+      console.log('[SpellingBee TV] Phase 2: PAUSE (10s)');
+
+      // Broadcast phase change to players
+      console.log('[SpellingBee TV] Emitting phase change: pause (10s) to room:', roomCode);
+      socket.emit('spelling-phase-change', { roomCode, phase: 'pause', duration: 10 });
+
+      let remaining = 10;
+      setSpellingTimeRemaining(remaining);
+
+      const pauseInterval = setInterval(() => {
+        remaining--;
+        setSpellingTimeRemaining(remaining);
+        if (remaining <= 0) {
+          clearInterval(pauseInterval);
+          runAnswerPhase();
+        }
+      }, 1000);
+    };
+
+    // Phase 3: ANSWER - 30 seconds to type and submit
+    const runAnswerPhase = () => {
+      setSpellingPhase('answer');
+      console.log('[SpellingBee TV] Phase 3: ANSWER (30s)');
+
+      // Broadcast phase change to players
+      console.log('[SpellingBee TV] Emitting phase change: answer (30s) to room:', roomCode);
+      socket.emit('spelling-phase-change', { roomCode, phase: 'answer', duration: 30 });
+
+      let remaining = 30;
+      setSpellingTimeRemaining(remaining);
+
+      const answerInterval = setInterval(() => {
+        remaining--;
+        setSpellingTimeRemaining(remaining);
+        if (remaining <= 0) {
+          clearInterval(answerInterval);
+        }
+      }, 1000);
+    };
+
+    runListenPhase();
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, [currentChallenge]);
 
   const handleStartGame = () => {
     if (!socket || players.length === 0) {
@@ -482,49 +621,191 @@ function CoordinatorScreen() {
                 <div className="relative z-10 text-center">
                   {currentChallenge ? (
                     <>
-                      <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1.5rem)'}}>{currentChallenge.emoji || '🧮'}</div>
+                      {/* Game Title and Icon */}
+                      <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1.5rem)'}}>
+                        {currentChallenge.gameType === 'speed-math' && '🧮'}
+                        {currentChallenge.gameType === 'true-false' && '✅'}
+                        {currentChallenge.gameType === 'trivia' && '🎯'}
+                        {currentChallenge.gameType === 'spelling' && '✏️'}
+                      </div>
                       <h3 className="font-black text-gray-900 leading-tight px-2 mb-4"
                           style={{
                             fontSize: 'clamp(1rem, 3vh, 2.5rem)',
                             textShadow: '0 2px 4px rgba(255,255,255,0.9)'
                           }}>
-                        Speed Math - {currentChallenge.operation?.charAt(0).toUpperCase() + currentChallenge.operation?.slice(1) || 'Challenge'}
+                        {currentChallenge.gameType === 'speed-math' && `Speed Math - ${currentChallenge.operation?.charAt(0).toUpperCase() + currentChallenge.operation?.slice(1)}`}
+                        {currentChallenge.gameType === 'true-false' && 'True or False'}
+                        {currentChallenge.gameType === 'trivia' && 'Christmas Trivia'}
+                        {currentChallenge.gameType === 'spelling' && 'Spelling Bee'}
                       </h3>
 
                       {/* Age-Adaptive Questions - Grouped by Tier */}
                       {currentChallenge.questions && currentChallenge.questions.length > 0 ? (
-                        <div className="space-y-3 md:space-y-4 max-w-6xl mx-auto">
-                          {currentChallenge.questions.map((tierData, idx) => (
-                            <div
-                              key={idx}
-                              className="bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl border-2 border-white/60 p-3 md:p-4 shadow-lg"
-                            >
-                              <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
-                                {/* Player Names */}
-                                <div className="flex flex-wrap justify-center md:justify-start gap-1 md:gap-2 min-w-[30%]">
-                                  {tierData.players.map((player, pIdx) => (
-                                    <span
-                                      key={pIdx}
-                                      className="bg-yellow-400 text-gray-900 font-bold px-2 md:px-3 py-1 rounded-full shadow-md"
-                                      style={{fontSize: 'clamp(0.75rem, 1.5vh, 1.25rem)'}}
-                                    >
-                                      {player.name}
-                                    </span>
-                                  ))}
-                                </div>
+                        <>
+                          {/* SPELLING BEE: Single unified panel (not per-tier) */}
+                          {currentChallenge.gameType === 'spelling' ? (
+                            <div className="max-w-6xl mx-auto">
+                              <div className="bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-3xl border-2 border-white/60 p-6 md:p-8 shadow-lg">
+                                <div className="text-center">
+                                  {/* Phase 1: LISTEN */}
+                                  {spellingPhase === 'listen' && (
+                                    <>
+                                      <div className="font-black text-blue-600 mb-4 animate-pulse"
+                                           style={{fontSize: 'clamp(2rem, 5vh, 4rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                        🎧 LISTEN CAREFULLY
+                                      </div>
+                                      {currentListeningTier && (
+                                        <>
+                                          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 mb-4">
+                                            <div className="text-white font-bold mb-2"
+                                                 style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)'}}>
+                                              This word is for:
+                                            </div>
+                                            <div className="text-yellow-300 font-black"
+                                                 style={{fontSize: 'clamp(1.75rem, 4.5vh, 3.5rem)'}}>
+                                              {currentChallenge.questions
+                                                .find(q => q.tier === currentListeningTier)
+                                                ?.players.map(p => p.name).join(', ') || currentListeningTier.toUpperCase()}
+                                            </div>
+                                          </div>
+                                          <div className="text-gray-800 font-bold"
+                                               style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)'}}>
+                                            Hear the word twice, then next group
+                                          </div>
+                                        </>
+                                      )}
+                                    </>
+                                  )}
 
-                                {/* Question */}
-                                <div className="font-black text-gray-900 flex-1 text-center"
-                                     style={{
-                                       fontSize: 'clamp(1.5rem, 4vh, 3.5rem)',
-                                       textShadow: '0 2px 4px rgba(255,255,255,0.9)'
-                                     }}>
-                                  {tierData.question} = ?
+                                  {/* Phase 2: PAUSE */}
+                                  {spellingPhase === 'pause' && (
+                                    <>
+                                      <div className="font-black text-yellow-600 mb-4"
+                                           style={{fontSize: 'clamp(2rem, 5vh, 4rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                        ⏸️ THINK TIME
+                                      </div>
+                                      <div className="bg-gradient-to-br from-yellow-300 to-orange-400 rounded-3xl p-8 mb-4">
+                                        <div className="text-gray-900 font-black"
+                                             style={{fontSize: 'clamp(4rem, 10vh, 8rem)'}}>
+                                          {spellingTimeRemaining}s
+                                        </div>
+                                      </div>
+                                      <div className="text-gray-800 font-bold"
+                                           style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)'}}>
+                                        You have 10 seconds to think about your spelling
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {/* Phase 3: ANSWER */}
+                                  {spellingPhase === 'answer' && (
+                                    <>
+                                      <div className="font-black text-green-600 mb-4"
+                                           style={{fontSize: 'clamp(2rem, 5vh, 4rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                        ✏️ SPELL IT NOW!
+                                      </div>
+                                      <div className="bg-gradient-to-br from-blue-400 to-purple-400 rounded-2xl p-8 mb-4">
+                                        <div className="text-white font-black"
+                                             style={{fontSize: 'clamp(4rem, 10vh, 8rem)'}}>
+                                          {spellingTimeRemaining}s
+                                        </div>
+                                      </div>
+                                      <div className="text-gray-800 font-bold"
+                                           style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)'}}>
+                                        You have 30 seconds to type your answer on your device!
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {/* Default: No phase yet */}
+                                  {!spellingPhase && (
+                                    <>
+                                      <div className="font-black text-blue-600 mb-2"
+                                           style={{fontSize: 'clamp(1.5rem, 4vh, 3.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                        🎤 SPELLING BEE
+                                      </div>
+                                      <div className="text-gray-700 font-bold"
+                                           style={{fontSize: 'clamp(1rem, 2.5vh, 2rem)'}}>
+                                        Listen → Think → Spell
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            /* OTHER GAME TYPES: Per-tier cards */
+                            <div className="space-y-3 md:space-y-4 max-w-6xl mx-auto">
+                              {currentChallenge.questions.map((tierData, idx) => (
+                                <div
+                                  key={idx}
+                                  className="bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl border-2 border-white/60 p-3 md:p-4 shadow-lg"
+                                >
+                                  <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+                                    {/* Player Names */}
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-1 md:gap-2 min-w-[30%]">
+                                      {tierData.players.map((player, pIdx) => (
+                                        <span
+                                          key={pIdx}
+                                          className="bg-yellow-400 text-gray-900 font-bold px-2 md:px-3 py-1 rounded-full shadow-md"
+                                          style={{fontSize: 'clamp(0.75rem, 1.5vh, 1.25rem)'}}
+                                        >
+                                          {player.name}
+                                        </span>
+                                      ))}
+                                    </div>
+
+                                    {/* Question Display - varies by game type */}
+                                    <div className="flex-1 text-center">
+                                      {/* Speed Math: show equation */}
+                                      {currentChallenge.gameType === 'speed-math' && (
+                                    <div className="font-black text-gray-900"
+                                         style={{
+                                           fontSize: 'clamp(1.5rem, 4vh, 3.5rem)',
+                                           textShadow: '0 2px 4px rgba(255,255,255,0.9)'
+                                         }}>
+                                      {tierData.question} = ?
+                                    </div>
+                                  )}
+
+                                  {/* True/False: show statement */}
+                                  {currentChallenge.gameType === 'true-false' && (
+                                    <div className="font-black text-gray-900"
+                                         style={{
+                                           fontSize: 'clamp(1.25rem, 3.5vh, 3rem)',
+                                           textShadow: '0 2px 4px rgba(255,255,255,0.9)'
+                                         }}>
+                                      {tierData.question}
+                                    </div>
+                                  )}
+
+                                  {/* Trivia: show question + options */}
+                                  {currentChallenge.gameType === 'trivia' && (
+                                    <div>
+                                      <div className="font-black text-gray-900 mb-2"
+                                           style={{
+                                             fontSize: 'clamp(1rem, 2.5vh, 2rem)',
+                                             textShadow: '0 2px 4px rgba(255,255,255,0.9)'
+                                           }}>
+                                        {tierData.question}
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2 mt-2">
+                                        {tierData.options?.map((opt, i) => (
+                                          <div key={i} className="bg-white/40 rounded-lg px-2 py-1 font-semibold text-gray-900"
+                                               style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)'}}>
+                                            {String.fromCharCode(65 + i)}. {opt}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
                           ))}
-                        </div>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div className="font-bold text-gray-900" style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)'}}>Loading questions...</div>
                       )}

@@ -7,6 +7,14 @@ const { GameState } = require('./utils/storyData');
 const { gradeSubmissions, calculateSectionStars } = require('./utils/answerValidator');
 const { generateChallenge } = require('./utils/challengeGenerator');
 
+// ============================================================
+// DEVELOPMENT FLAG - Set game type for testing via environment variable
+// ============================================================
+// Usage: GAME_TYPE=true-false node server/index.js
+// Options: 'speed-math', 'true-false', 'trivia', 'spelling' (or leave unset for random)
+const DEV_GAME_TYPE = process.env.GAME_TYPE || null;
+// ============================================================
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -36,16 +44,17 @@ function handleChallengeActive(roomCode, io) {
   if (!game || !flowCoordinator) return;
 
   // Generate age-adaptive challenge with questions for each tier
+  // DEV_GAME_TYPE: Set at top of file for testing, or null for random
   const challenge = generateChallenge(
     flowCoordinator.currentRound,
     flowCoordinator.currentSection,
     game.players, // Pass players array for age-adaptive questions
-    'speed-math'
+    DEV_GAME_TYPE  // null = random, or specify: 'speed-math', 'true-false', 'trivia', 'spelling'
   );
 
   game.currentChallenge = challenge;
 
-  console.log(`[${roomCode}] Generated ${challenge.operation} challenge for round ${flowCoordinator.currentRound} with ${challenge.questions.length} age tiers`);
+  console.log(`[${roomCode}] Generated ${challenge.gameType} challenge for round ${flowCoordinator.currentRound} with ${challenge.questions.length} age tiers`);
 
   // Broadcast full challenge to coordinator (TV shows all questions grouped by tier)
   io.to(game.coordinator).emit('challenge-started', {
@@ -57,16 +66,27 @@ function handleChallengeActive(roomCode, io) {
   // Send individual questions to each player (phone shows their specific question only)
   challenge.questions.forEach(tierData => {
     tierData.players.forEach(player => {
-      io.to(player.id).emit('challenge-data', {
+      const challengeDataForPlayer = {
         challengeId: challenge.id,
         round: flowCoordinator.currentRound,
         section: flowCoordinator.currentSection,
         question: tierData.question,
         answer: tierData.answer, // Include for client validation if needed (will validate on server too)
-        operation: challenge.operation,
-        difficulty: challenge.difficulty,
+        gameType: challenge.gameType, // IMPORTANT: Needed for player to identify game type
+        operation: challenge.operation, // For speed-math
+        difficulty: challenge.difficulty, // For speed-math
+        options: tierData.options, // For trivia
+        hint: tierData.hint, // For spelling
         timeLimit: challenge.timeLimit
-      });
+      };
+
+      // For spelling bee: include phases and all questions (for audio pronunciation)
+      if (challenge.gameType === 'spelling' && challenge.phases) {
+        challengeDataForPlayer.phases = challenge.phases;
+        challengeDataForPlayer.allQuestions = challenge.questions; // All tier words for sequential pronunciation
+      }
+
+      io.to(player.id).emit('challenge-data', challengeDataForPlayer);
     });
   });
 }
@@ -384,6 +404,17 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Relay spelling bee phase changes from coordinator to all players
+  socket.on('spelling-phase-change', ({ roomCode, phase, duration }) => {
+    const game = games.get(roomCode);
+    if (!game) return;
+
+    console.log(`[${roomCode}] Relaying spelling phase: ${phase}${duration ? ` (${duration}s)` : ''}`);
+
+    // Broadcast to all players in the room
+    io.to(roomCode).emit('spelling-phase-change', { phase, duration });
+  });
+
   // Disconnect
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
@@ -444,6 +475,8 @@ function gradeAndAdvance(roomCode, io) {
   });
 
   // Grade each submission against their specific question
+  const { validateAnswer } = require('./utils/answerValidator');
+
   const results = submissions.map(sub => {
     const playerData = playerAnswers.get(sub.playerId);
     if (!playerData) {
@@ -451,8 +484,13 @@ function gradeAndAdvance(roomCode, io) {
       return null;
     }
 
-    // Validate answer
-    const isCorrect = parseInt(sub.answer) === playerData.correctAnswer;
+    // Validate answer using the proper validator based on answer type
+    const isCorrect = validateAnswer(
+      sub.answer,
+      playerData.correctAnswer,
+      challenge.answerType,
+      challenge.validationOptions || {}
+    );
 
     return {
       playerId: sub.playerId,
@@ -516,4 +554,8 @@ const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`🎉 iParty server running on port ${PORT}`);
   console.log(`📱 Access from phones: http://192.168.68.72:${PORT}`);
+  console.log(`🎮 Game Type: ${DEV_GAME_TYPE || 'RANDOM (all 4 games)'}`);
+  if (DEV_GAME_TYPE) {
+    console.log(`⚠️  DEVELOPMENT MODE: Testing ${DEV_GAME_TYPE} only`);
+  }
 });

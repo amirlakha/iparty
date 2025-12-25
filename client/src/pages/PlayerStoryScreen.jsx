@@ -18,6 +18,12 @@ function PlayerStoryScreen() {
   const [startTime, setStartTime] = useState(null);
   const [result, setResult] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null); // Store player's specific question
+  const [challengeData, setChallengeData] = useState(null); // Store full challenge data (for options, gameType, etc.)
+
+  // Spelling bee audio state
+  const [spellingPhase, setSpellingPhase] = useState(null); // 'listen', 'pause', 'answer'
+  const [spellingTimeRemaining, setSpellingTimeRemaining] = useState(0);
+  const [currentListeningTier, setCurrentListeningTier] = useState(null);
 
   useEffect(() => {
     console.log('[PlayerStoryScreen] Component mounted/updated - VERSION 2.0');
@@ -37,6 +43,7 @@ function PlayerStoryScreen() {
         setAnswer('');
         setResult(null);
         setCurrentQuestion(null);
+        setChallengeData(null);
         setStartTime(Date.now());
       }
     });
@@ -47,9 +54,18 @@ function PlayerStoryScreen() {
     });
 
     socket.on('challenge-data', (data) => {
-      console.log('[PlayerStoryScreen] Challenge received:', data.question);
+      console.log('[PlayerStoryScreen] Challenge received:', data.question, 'Type:', data.operation || 'other');
       setCurrentQuestion(data.question);
+      setChallengeData(data); // Store full data for options, hints, etc.
       setStartTime(Date.now());
+
+      // Initialize spelling bee phase if it's a spelling challenge
+      if (data.hint && data.phases) {
+        console.log('[PlayerStoryScreen] Spelling bee detected, initializing to listen phase');
+        setSpellingPhase('listen');
+      } else {
+        setSpellingPhase(null);
+      }
     });
 
     socket.on('challenge-results', (data) => {
@@ -77,6 +93,61 @@ function PlayerStoryScreen() {
       socket.off('scores-updated');
     };
   }, [socket, roomCode]);
+
+  // Spelling Bee Phase Sync: Listen for phase changes from Coordinator (TV)
+  useEffect(() => {
+    if (!socket || !challengeData || challengeData.gameType !== 'spelling') return;
+
+    let countdownInterval = null;
+
+    const handlePhaseChange = ({ phase, duration }) => {
+      console.log(`[SpellingBee Player] Phase change from TV: ${phase}${duration ? ` (${duration}s)` : ''}`);
+
+      // Clear any existing countdown
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+
+      // Update phase
+      setSpellingPhase(phase);
+
+      // Start countdown if duration provided
+      if (duration) {
+        let remaining = duration;
+        setSpellingTimeRemaining(remaining);
+
+        // Start answer timer when entering answer phase
+        if (phase === 'answer') {
+          setStartTime(Date.now());
+        }
+
+        countdownInterval = setInterval(() => {
+          remaining--;
+          setSpellingTimeRemaining(remaining);
+
+          if (remaining <= 0) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+
+            // Auto-submit if time runs out in answer phase
+            if (phase === 'answer' && !submitted && answer.trim()) {
+              handleSubmitAnswer();
+            }
+          }
+        }, 1000);
+      }
+    };
+
+    socket.on('spelling-phase-change', handlePhaseChange);
+
+    return () => {
+      socket.off('spelling-phase-change', handlePhaseChange);
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
+    };
+  }, [socket, challengeData, submitted, answer]);
 
   const handleSubmitAnswer = () => {
     if (!socket || submitted || !answer.trim()) return;
@@ -159,15 +230,151 @@ function PlayerStoryScreen() {
                 <div className="relative z-10">
                   {/* Question Display */}
                   <div className="text-center" style={{marginBottom: 'clamp(1.5rem, 3vh, 3rem)'}}>
-                    <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>🧮</div>
+                    {/* Icon based on game type */}
+                    <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>
+                      {challengeData?.operation && '🧮'}
+                      {challengeData?.options && '🎯'}
+                      {challengeData?.hint && '✏️'}
+                      {(!challengeData?.operation && !challengeData?.options && !challengeData?.hint && currentQuestion) && '✅'}
+                      {!currentQuestion && '📺'}
+                    </div>
+
                     {currentQuestion ? (
                       <>
-                        <h2 className="font-black text-gray-900" style={{fontSize: 'clamp(2rem, 5vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
-                          {currentQuestion} = ?
-                        </h2>
-                        <p className="text-purple-600 font-bold" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
-                          Enter your answer below
-                        </p>
+                        {/* Speed Math: show equation */}
+                        {challengeData?.operation && (
+                          <>
+                            <h2 className="font-black text-gray-900" style={{fontSize: 'clamp(2rem, 5vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                              {currentQuestion} = ?
+                            </h2>
+                            <p className="text-purple-600 font-bold" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                              Enter your answer
+                            </p>
+                          </>
+                        )}
+
+                        {/* Trivia: show question + options */}
+                        {challengeData?.options && (
+                          <>
+                            <h2 className="font-black text-gray-900 mb-3" style={{fontSize: 'clamp(1.25rem, 3vh, 2.5rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                              {currentQuestion}
+                            </h2>
+                            <div className="space-y-2 mb-3">
+                              {challengeData.options.map((opt, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => setAnswer(opt)}
+                                  className={`w-full rounded-xl font-bold px-3 py-2 transition-all ${
+                                    answer === opt
+                                      ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white scale-105 shadow-xl'
+                                      : 'bg-white/60 text-gray-900 hover:bg-white/80'
+                                  }`}
+                                  style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)'}}
+                                >
+                                  {String.fromCharCode(65 + i)}. {opt}
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-purple-600 font-bold" style={{fontSize: 'clamp(0.75rem, 1.25vh, 1rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                              Tap an option, then submit
+                            </p>
+                          </>
+                        )}
+
+                        {/* Spelling Bee: Audio-based with 3 phases */}
+                        {challengeData?.hint && challengeData?.phases && (
+                          <>
+                            {/* PHASE 1: LISTEN */}
+                            {spellingPhase === 'listen' && (
+                              <>
+                                <h2 className="font-black text-blue-600" style={{fontSize: 'clamp(2rem, 5vh, 4rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                  🎧 LISTEN
+                                </h2>
+                                <div className="animate-pulse bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl p-4 mb-3">
+                                  <p className="text-white font-black" style={{fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}>
+                                    {currentListeningTier ? `${currentListeningTier.toUpperCase()} TIER` : 'Listen carefully...'}
+                                  </p>
+                                </div>
+                                <p className="text-gray-800 font-bold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                                  Each group hears their word twice
+                                </p>
+                              </>
+                            )}
+
+                            {/* PHASE 2: PAUSE */}
+                            {spellingPhase === 'pause' && (
+                              <>
+                                <h2 className="font-black text-yellow-600" style={{fontSize: 'clamp(2rem, 5vh, 4rem)', marginBottom: 'clamp(1rem, 2vh, 2rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                  ⏸️ THINK
+                                </h2>
+                                <div className="bg-gradient-to-br from-yellow-300 to-orange-400 rounded-2xl p-6 mb-3">
+                                  <p className="text-gray-900 font-black" style={{fontSize: 'clamp(3rem, 8vh, 6rem)'}}>
+                                    {spellingTimeRemaining}
+                                  </p>
+                                </div>
+                                <p className="text-gray-800 font-bold" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                                  Remember the word you heard!
+                                </p>
+                              </>
+                            )}
+
+                            {/* PHASE 3: ANSWER */}
+                            {spellingPhase === 'answer' && (
+                              <>
+                                <h2 className="font-black text-green-600" style={{fontSize: 'clamp(1.75rem, 4.5vh, 3.5rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                                  ✏️ Spell the Word
+                                </h2>
+                                <div className="bg-gradient-to-br from-blue-400 to-purple-400 rounded-xl p-3 mb-3">
+                                  <p className="text-white font-black" style={{fontSize: 'clamp(2rem, 4vh, 3rem)'}}>
+                                    ⏱️ {spellingTimeRemaining}s
+                                  </p>
+                                </div>
+                                <p className="text-purple-600 font-bold mb-2" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                                  Hint: {challengeData.hint}
+                                </p>
+                                <p className="text-gray-700 font-semibold" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                                  Type the spelling below
+                                </p>
+                              </>
+                            )}
+                          </>
+                        )}
+
+                        {/* True/False: show statement */}
+                        {!challengeData?.operation && !challengeData?.options && !challengeData?.hint && (
+                          <>
+                            <h2 className="font-black text-gray-900 mb-4" style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                              {currentQuestion}
+                            </h2>
+                            <div className="flex gap-3 justify-center mb-3">
+                              <button
+                                onClick={() => setAnswer('true')}
+                                className={`rounded-xl font-black px-6 py-3 transition-all ${
+                                  answer === 'true'
+                                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white scale-110 shadow-2xl'
+                                    : 'bg-white/60 text-green-700 hover:bg-white/80'
+                                }`}
+                                style={{fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}
+                              >
+                                ✓ TRUE
+                              </button>
+                              <button
+                                onClick={() => setAnswer('false')}
+                                className={`rounded-xl font-black px-6 py-3 transition-all ${
+                                  answer === 'false'
+                                    ? 'bg-gradient-to-r from-red-500 to-red-600 text-white scale-110 shadow-2xl'
+                                    : 'bg-white/60 text-red-700 hover:bg-white/80'
+                                }`}
+                                style={{fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}
+                              >
+                                ✗ FALSE
+                              </button>
+                            </div>
+                            <p className="text-purple-600 font-bold" style={{fontSize: 'clamp(0.75rem, 1.25vh, 1rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                              Tap your answer, then submit
+                            </p>
+                          </>
+                        )}
                       </>
                     ) : (
                       <>
@@ -181,32 +388,42 @@ function PlayerStoryScreen() {
                     )}
                   </div>
 
-                  {/* Answer Input */}
-                  <div style={{display: 'flex', flexDirection: 'column', gap: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>
-                    <input
-                      type="text"
-                      value={answer}
-                      onChange={(e) => setAnswer(e.target.value)}
-                      placeholder="Type your answer..."
-                      className="w-full bg-white rounded-2xl border-4 border-blue-400 focus:border-blue-600 focus:outline-none shadow-lg"
-                      style={{padding: 'clamp(1rem, 2vh, 1.5rem)', fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSubmitAnswer()}
-                      autoFocus
-                    />
+                  {/* Answer Input - only for Speed Math and Spelling (answer phase only) */}
+                  {(challengeData?.operation || (challengeData?.hint && spellingPhase === 'answer')) && (
+                    <div style={{display: 'flex', flexDirection: 'column', gap: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>
+                      <input
+                        type="text"
+                        value={answer}
+                        onChange={(e) => setAnswer(e.target.value)}
+                        placeholder="Type your answer..."
+                        className="w-full bg-white rounded-2xl border-4 border-blue-400 focus:border-blue-600 focus:outline-none shadow-lg"
+                        style={{padding: 'clamp(1rem, 2vh, 1.5rem)', fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSubmitAnswer()}
+                        autoFocus
+                        disabled={challengeData?.hint && spellingPhase !== 'answer'}
+                      />
+                    </div>
+                  )}
 
-                    <button
-                      onClick={handleSubmitAnswer}
-                      disabled={!answer.trim()}
-                      className={`w-full rounded-2xl font-black shadow-2xl border-4 border-white transition-all ${
-                        !answer.trim()
-                          ? 'bg-gray-400 cursor-not-allowed opacity-50'
-                          : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white active:scale-95'
-                      }`}
-                      style={{padding: 'clamp(1.25rem, 3vh, 2rem)', fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}
-                    >
-                      Submit Answer
-                    </button>
-                  </div>
+                  {/* Submit Button - disabled during listen/pause phases */}
+                  <button
+                    onClick={handleSubmitAnswer}
+                    disabled={
+                      !answer ||
+                      (typeof answer === 'string' && !answer.trim()) ||
+                      (challengeData?.hint && spellingPhase !== 'answer')
+                    }
+                    className={`w-full rounded-2xl font-black shadow-2xl border-4 border-white transition-all ${
+                      (!answer || (typeof answer === 'string' && !answer.trim()) || (challengeData?.hint && spellingPhase !== 'answer'))
+                        ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white active:scale-95'
+                    }`}
+                    style={{padding: 'clamp(1.25rem, 3vh, 2rem)', fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}
+                  >
+                    {challengeData?.hint && spellingPhase === 'listen' ? '🎧 Listening...' :
+                     challengeData?.hint && spellingPhase === 'pause' ? '⏸️ Get Ready...' :
+                     'Submit Answer'}
+                  </button>
                 </div>
               </div>
             </div>
