@@ -1,6 +1,6 @@
 /**
  * Question Pools for Mini-Games
- * Age-adaptive difficulty: easy (7-9), medium (10-12), hard (13-17)
+ * Age-adaptive difficulty: easy (≤9), medium (10-12), hard (≥13)
  */
 
 // ==================== SPEED MATH ====================

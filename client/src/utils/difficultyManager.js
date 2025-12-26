@@ -7,9 +7,9 @@
  * Age brackets
  */
 export const AgeBracket = {
-  YOUNG: 'young',    // 7-9 years
+  YOUNG: 'young',    // ≤9 years
   MIDDLE: 'middle',  // 10-12 years
-  TEEN: 'teen'       // 13-17 years
+  TEEN: 'teen'       // ≥13 years
 };
 
 /**

@@ -1,6 +1,6 @@
 /**
  * Question Pools for All Mini-Games
- * Organized by game type and age tier (young: 7-9, middle: 10-12, teen: 13-17)
+ * Organized by game type and age tier (young: ≤9, middle: 10-12, teen: ≥13)
  */
 
 /**

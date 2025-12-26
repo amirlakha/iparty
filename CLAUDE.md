@@ -1,212 +1,124 @@
-# Claude Code Instructions for iParty Project
+# CLAUDE.md
 
-## Quick Start for New Sessions
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**When starting a new conversation:**
+## Project Overview
 
-1. **Read PROJECT.md first** - Get project overview and current status
-2. **Read PROGRESS.md second** - See latest session activity and next priorities
-3. **Reference IMPLEMENTATION_PLAN.md** - Use this as the technical roadmap (SOURCE OF TRUTH)
-4. **Continue from "Next Session Priorities"** in PROGRESS.md
+iParty is an autonomous, story-driven Christmas party game. Players join on phones while a TV displays the main game. The game runs without a host—all progression is timer-based and server-controlled. Questions are age-adaptive with three tiers: young (≤9), middle (10-12), teen (≥13).
 
----
+**Core concept:** "Save Christmas Village" - 5 workshop sections × 5 challenges each = 25 rounds total.
 
-## Project Status Summary
+## Development Commands
 
-**Target:** Christmas Day (Dec 25, 2024)
-**Current Date Context:** Dec 23, 2024 (Evening session completed)
+```bash
+# Start server (Terminal 1)
+cd server && npm start
+# Server runs on port 3001, listens on 0.0.0.0 for network access
 
-### ✅ Completed
-- [x] All artwork generated (13 images in client/src/assets/images/)
-  - 3 characters: santa-character.png, elf-character.png, reindeer-character.png
-  - 5 backgrounds: bg-toy-machine.png, bg-reindeer-stable.png, bg-gift-wrap.png, bg-cookie-kitchen.png, bg-sleigh-launch.png
-  - 5 UI elements: game-logo.png, star-icon.png, village-map.png, celebration-burst.png, victory-scene.png
-- [x] Complete implementation plan created (IMPLEMENTATION_PLAN.md)
-- [x] Basic multiplayer infrastructure working (Socket.io, React, Vite)
-- [x] Network connectivity fixed (phones can connect)
-- [x] Git repository initialized with all assets committed
+# Start client (Terminal 2)
+cd client && npm run dev
+# Vite dev server with --host for network access
 
-### ⏳ Not Started - BEGIN HERE
-- [ ] Core Architecture (Week 1 Day 1) - **START WITH THIS**
-  - [ ] Create christmasStory.js
-  - [ ] Build storyFlowEngine.js
-  - [ ] Update server for autonomous flow
-  - [ ] Implement auto-advance timers
+# Lint client code
+cd client && npm run lint
 
----
+# Build for production
+cd client && npm run build
 
-## Document Structure
+# Force specific game type during development
+GAME_TYPE=spelling node server/index.js
+# Options: speed-math, true-false, trivia, spelling, connect4
+```
 
-### PROJECT.md
-**Purpose:** High-level project overview, vision, current status, decision log
-**When to read:** Start of new session for context
-**When to update:** After major milestones or decisions
+## Architecture
 
-### IMPLEMENTATION_PLAN.md
-**Purpose:** Complete technical roadmap - **SOURCE OF TRUTH FOR IMPLEMENTATION**
-**When to read:** When implementing features, designing architecture
-**When to update:** Only if requirements change significantly (rare)
+### Client-Server Communication
+- **Socket.io** for real-time WebSocket communication
+- Server URL configured in `client/src/context/SocketContext.jsx` - uses `VITE_API_URL` env var or dynamic hostname
+- Server is authoritative: validates all answers, manages game state, controls timing
 
-### PROGRESS.md
-**Purpose:** Session-by-session activity log, checklist, immediate next steps
-**When to read:** Every session to see what was done and what's next
-**When to update:** During and at end of each session
+### Game Flow (Autonomous)
+The `FlowCoordinator` class (`server/utils/flowCoordinator.js`) manages automatic state transitions:
+```
+LOBBY → INTRODUCTION (12s) → SECTION_INTRO (8s) → CHALLENGE_ACTIVE (60s)
+→ CHALLENGE_RESULTS (5s) → [repeat 5x] → SECTION_COMPLETE (5s)
+→ MAP_TRANSITION (3s) → [repeat 5 sections] → VICTORY
+```
 
-### CLAUDE.md (this file)
-**Purpose:** Instructions for Claude Code on how to navigate the project
-**When to read:** Start of every new session
+### Screen Roles
+- **CoordinatorScreen** (`/coordinator`): TV display showing story, questions, results
+- **PlayerStoryScreen** (`/play`): Phone input controller only - answers and status
+- **Home** (`/`): Entry point with join/coordinate options
+- **ScreenPreview** (`/preview`): Design reference prototypes
 
----
+### Key Server Files
+```
+server/
+├── index.js              # Express + Socket.io server, game state, event handlers
+├── utils/
+│   ├── flowCoordinator.js    # Autonomous state machine, timer management
+│   ├── challengeGenerator.js # Multi-type challenge generation
+│   ├── questionGenerator.js  # Age-adaptive question creation (≤9, 10-12, ≥13)
+│   ├── answerValidator.js    # Scoring, star calculation, placements
+│   ├── connect4Logic.js      # Connect 4 board logic, win detection
+│   └── storyData.js          # Game constants, state enum, timing
+└── data/
+    └── questionPools.js      # Question banks for trivia, true/false, spelling
+```
 
-## Key Implementation Details
+### Key Client Files
+```
+client/src/
+├── context/SocketContext.jsx  # Socket.io provider and hook
+├── pages/
+│   ├── CoordinatorScreen.jsx  # TV display (all game states)
+│   ├── PlayerStoryScreen.jsx  # Phone controller
+│   └── Home.jsx               # Landing page
+├── components/
+│   ├── CircularTimer.jsx      # Countdown ring for challenges
+│   └── ProgressBar.jsx        # Story/transition progress
+└── data/
+    └── christmasStory.js      # Section narratives, timing constants
+```
 
-### Story Structure
-5-act "Save Christmas Village" adventure:
-- Act 1: Toy Machine Workshop (Rounds 1-3)
-- Act 2: Reindeer Stable (Rounds 4-6)
-- Act 3: Gift Wrapping Station (Rounds 7-9)
-- Act 4: Cookie Kitchen (Rounds 10-12)
-- Act 5: Sleigh Launch (Rounds 13-15)
+## Game Types
 
-### Autonomous Flow (CRITICAL)
-- **NO manual host controls** - game runs automatically
-- Timer-based progression: 8s story intro → 60s challenge → 5s results → repeat
-- Server validates ALL answers automatically
-- Age-adaptive difficulty (median player age)
+5 mini-games cycle through each section:
+1. **Speed Math** - Age-tiered arithmetic
+2. **True/False** - Statement verification
+3. **Trivia** - Multiple choice (A/B/C/D)
+4. **Spelling Bee** - Audio-based with Web Speech API
+5. **Connect 4** - Team-based board game
 
-### MVP Mini-Games (Must have 6 for launch)
-1. Speed Math
-2. Multiple Choice Trivia
-3. True/False Quiz
-4. Spelling Bee
-5. Color Pattern Match
-6. Memory Match
+## Scoring System
 
-### Major Architectural Changes
-**DELETE:**
-- client/src/pages/HostScreen.jsx (323 lines)
-- client/src/utils/roundGenerator.js (replace completely)
+- **Stars (team):** 1 star per question if ANY player answers correctly. Need 5/5 stars to pass section.
+- **Points (individual):** Placement-based (1st=30, 2nd=20, 3rd+=10). Section bonus +30 for success.
+- **Retry:** If <5 stars, section replays and all section points are removed.
 
-**CREATE (~20 new files):**
-- Data: christmasStory.js, questionPools.js
-- Utils: storyFlowEngine.js, answerValidator.js, difficultyManager.js
-- Screens: CoordinatorScreen.jsx, PlayerStoryScreen.jsx, SectionTransition.jsx, VictoryScreen.jsx
-- Components: 6 reusable components (BackgroundLayer, CharacterGuide, etc.)
-- Mini-Games: 6 game components
+## Socket Events
 
-**MODIFY:**
-- server/index.js - Add autonomous flow + auto-scoring
-- client/src/App.jsx - Update routes
-- client/tailwind.config.js - Add animations
+Key events between client and server:
+- `create-game`, `join-game` - Room management
+- `start-game` - Coordinator initiates game
+- `game-state-update` - Server broadcasts state changes
+- `challenge`, `player-challenge` - Challenge data distribution
+- `submit-answer`, `answer-submitted` - Player submissions
+- `challenge-results`, `section-complete` - Results broadcasting
+- `connect4-move`, `connect4-board-update` - Connect 4 gameplay
+- `spelling-phase-change` - Spelling bee synchronization
 
----
+## Testing
 
-## Implementation Approach
+Multi-window browser testing:
+1. Open coordinator at `http://localhost:5173/` → "Coordinate a Game"
+2. Open player windows (incognito/different profiles) at same URL → "Join a Game"
+3. Enter room code from coordinator screen
+4. Game runs autonomously once started
 
-### Week 1: Foundation (8-10 hours)
-**Day 1: Core Architecture (4 hrs)** ← **START HERE**
-- Create story data structure
-- Build autonomous flow engine
-- Update server game state model
-- Implement auto-advance timers
+## Project Documentation
 
-**Day 2: Automatic Scoring (4 hrs)**
-- Create answer validator
-- Implement point calculation
-- Add answer validation to server
-- Test scoring accuracy
-
-**Day 3: Question Pools (2 hrs)**
-- Build question database
-- Create age-adaptive difficulty
-- Populate questions for 6 MVP games
-
-### Week 2: Screens & Components (12 hours)
-- Day 4: Reusable Components (4 hrs)
-- Day 5: New Screens (4 hrs)
-- Day 6: Mini-Game Components (4 hrs)
-
-### Week 3: Polish & Integration (5-7 hours)
-- Day 7: More Mini-Games (3 hrs)
-- Day 8: Artwork Integration (2 hrs)
-- Day 9: Testing & Bug Fixes (2 hrs)
-
----
-
-## Success Criteria for Christmas Launch
-
-- [ ] 6 mini-games working with auto-scoring
-- [ ] Story progression through all 5 sections
-- [ ] All 13 images integrated appropriately
-- [ ] Autonomous flow (no manual controls)
-- [ ] Age-adaptive difficulty working
-- [ ] Mobile + TV display optimized
-- [ ] No crashes during full playthrough
-
----
-
-## File Locations Reference
-
-### Documentation
-- `/Users/amirlakha/dev-node/iparty/PROJECT.md`
-- `/Users/amirlakha/dev-node/iparty/IMPLEMENTATION_PLAN.md`
-- `/Users/amirlakha/dev-node/iparty/PROGRESS.md`
-- `/Users/amirlakha/dev-node/iparty/CLAUDE.md` (this file)
-
-### Artwork Assets
-- `/Users/amirlakha/dev-node/iparty/client/src/assets/images/` (13 PNG files)
-
-### Current Codebase
-- Server: `/Users/amirlakha/dev-node/iparty/server/index.js`
-- Client: `/Users/amirlakha/dev-node/iparty/client/src/`
-
-### Git Repository
-- Initialized: Yes
-- All artwork committed: Yes
-- Working directory: `/Users/amirlakha/dev-node/iparty/`
-
----
-
-## Important Reminders
-
-1. **Use TodoWrite tool** to track tasks during implementation
-2. **Update PROGRESS.md** at end of each session
-3. **Commit frequently** with clear messages
-4. **Test on mobile** as you build (phones must work)
-5. **Autonomous flow is critical** - no manual host controls
-6. **Server validates answers** - all scoring server-side
-7. **Age-adaptive difficulty** - scale by median player age
-8. **Timeline is tight** - Christmas Day is the target
-
----
-
-## Technical Stack
-
-- Frontend: React 19.2.0, Vite, Tailwind CSS v3
-- Backend: Node.js, Express, Socket.io
-- Real-time: WebSocket communication
-- Styling: Tailwind CSS with custom animations
-- Version Control: Git
-
-### Dev Server Notes
-- Server runs on port 3001
-- Client runs on Vite dev server (standard port)
-- Server listens on 0.0.0.0 for network access
-- Socket URL is dynamic: `${window.location.hostname}:3001`
-
----
-
-## Next Action
-
-**On your next session, immediately:**
-1. Read PROJECT.md and PROGRESS.md
-2. Create TODO list with Week 1 Day 1 tasks
-3. Begin implementing christmasStory.js
-4. Reference IMPLEMENTATION_PLAN.md for detailed specifications
-
-**Estimated time to first playable:** 8-10 hours (Week 1 completion)
-**Estimated time to MVP launch:** 20-25 hours total
-
----
-
-Last Updated: Dec 23, 2024 (Evening)
+- `PROGRESS.md` - Session log with latest changes and next priorities
+- `IMPLEMENTATION_PLAN.md` - Full technical roadmap (source of truth)
+- `PROJECT.md` - High-level overview and decision log
+- `MINI_GAMES.md` - Detailed game specifications

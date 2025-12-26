@@ -16,17 +16,21 @@ const AGE_TIERS = {
  * Get age tier for a player
  */
 function getAgeTier(age) {
-  if (age >= AGE_TIERS.YOUNG.min && age <= AGE_TIERS.YOUNG.max) {
+  // Handle edge cases: younger kids get easiest, adults get hardest
+  if (age < AGE_TIERS.YOUNG.min) {
     return AGE_TIERS.YOUNG.label;
   }
-  if (age >= AGE_TIERS.MIDDLE.min && age <= AGE_TIERS.MIDDLE.max) {
-    return AGE_TIERS.MIDDLE.label;
-  }
-  if (age >= AGE_TIERS.TEEN.min && age <= AGE_TIERS.TEEN.max) {
+  if (age > AGE_TIERS.TEEN.max) {
     return AGE_TIERS.TEEN.label;
   }
-  // Default to middle for out-of-range ages
-  return AGE_TIERS.MIDDLE.label;
+  // Standard age bands
+  if (age <= AGE_TIERS.YOUNG.max) {
+    return AGE_TIERS.YOUNG.label;
+  }
+  if (age <= AGE_TIERS.MIDDLE.max) {
+    return AGE_TIERS.MIDDLE.label;
+  }
+  return AGE_TIERS.TEEN.label;
 }
 
 /**

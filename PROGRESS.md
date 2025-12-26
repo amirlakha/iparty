@@ -763,4 +763,39 @@ All major game screens now have high-fidelity visual prototypes that demonstrate
 
 ---
 
-Last Updated: Dec 25, 2024 (Christmas Day - Connect 4 & Localization)
+### Dec 26, 2024 - Age Tier Edge Case Fix
+
+**Completed:**
+- ✅ **Fixed age tier handling for edge cases**
+  - Ages < 7 now get "young" tier (easiest questions) instead of "middle"
+  - Ages > 17 now get "teen" tier (hardest questions) instead of "middle"
+  - Updated `server/utils/questionGenerator.js` - `getAgeTier()` function
+- ✅ **Updated documentation comments for consistency**
+  - `server/data/questionPools.js` - Header comment
+  - `client/src/data/questionPools.js` - Header comment
+  - `client/src/utils/difficultyManager.js` - AgeBracket comments
+  - `CLAUDE.md` - Project overview and file descriptions
+- ✅ **Rewrote CLAUDE.md** for Claude Code guidance
+  - Focused on development commands and architecture
+  - Removed outdated project status/timeline information
+  - Added socket events documentation
+
+**Age Tier Summary:**
+| Age | Tier | Difficulty |
+|-----|------|------------|
+| < 7 | young | Easiest |
+| 7-9 | young | Easiest |
+| 10-12 | middle | Medium |
+| 13-17 | teen | Hardest |
+| > 17 | teen | Hardest |
+
+**Files Modified:**
+- `server/utils/questionGenerator.js`
+- `server/data/questionPools.js`
+- `client/src/data/questionPools.js`
+- `client/src/utils/difficultyManager.js`
+- `CLAUDE.md`
+
+---
+
+Last Updated: Dec 26, 2024 (Age Tier Edge Case Fix)
