@@ -4,6 +4,7 @@ import Lobby from './pages/Lobby';
 import CoordinatorScreen from './pages/CoordinatorScreen';
 import PlayerStoryScreen from './pages/PlayerStoryScreen';
 import ScreenPreview from './pages/ScreenPreview';
+import PreviewGame from './pages/PreviewGame';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/play" element={<PlayerStoryScreen />} />
           <Route path="/preview" element={<ScreenPreview />} />
           <Route path="/preview/:screen" element={<ScreenPreview />} />
+          <Route path="/preview-game/:gameType" element={<PreviewGame />} />
         </Routes>
       </div>
     </Router>

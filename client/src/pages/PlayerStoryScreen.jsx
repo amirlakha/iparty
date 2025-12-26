@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
+import SnakeController from '../components/SnakeController';
+
+console.log('[PlayerStoryScreen] FILE LOADED - v3');
 
 function PlayerStoryScreen() {
+  console.log('[PlayerStoryScreen] COMPONENT RENDERING');
   const location = useLocation();
   const navigate = useNavigate();
   const { socket } = useSocket();
@@ -32,11 +36,24 @@ function PlayerStoryScreen() {
   const [connect4IsDraw, setConnect4IsDraw] = useState(false);
   const [connect4Teams, setConnect4Teams] = useState(null);
 
+  // Snake game state
+  const [snakePlayerState, setSnakePlayerState] = useState(null);
+  const [snakeRespawnCountdown, setSnakeRespawnCountdown] = useState(0);
+
   useEffect(() => {
-    console.log('[PlayerStoryScreen] Component mounted/updated - VERSION 2.0');
+    console.log('[PlayerStoryScreen] useEffect triggered');
     console.log('[PlayerStoryScreen] Socket:', socket?.id, 'Room:', roomCode);
 
-    if (!socket || !roomCode) return;
+    if (!socket) {
+      console.log('[PlayerStoryScreen] No socket, returning early');
+      return;
+    }
+    if (!roomCode) {
+      console.log('[PlayerStoryScreen] No roomCode, returning early');
+      return;
+    }
+
+    console.log('[PlayerStoryScreen] Setting up socket listeners...');
 
     socket.on('game-state-update', (data) => {
       console.log('[PlayerStoryScreen] Game state update:', data.state, 'Round:', data.round);
@@ -109,6 +126,17 @@ function PlayerStoryScreen() {
         setConnect4Teams(teams);
         setChallengeData(data.challenge); // Store challenge data
       }
+
+      // Initialize Snake state when game starts
+      if (data.challenge && data.challenge.gameType === 'snake') {
+        console.log('[PlayerStoryScreen] Snake challenge started');
+        const mySnake = data.challenge.snakes[socket.id];
+        if (mySnake) {
+          console.log(`[PlayerStoryScreen] I am ${mySnake.colorName} snake`);
+          setSnakePlayerState(mySnake);
+        }
+        setChallengeData(data.challenge); // Store challenge data
+      }
     });
 
     socket.on('connect4-update', (data) => {
@@ -122,6 +150,45 @@ function PlayerStoryScreen() {
       }
     });
 
+    // Snake game events
+    socket.on('snake-game-start', (data) => {
+      console.log('[PlayerStoryScreen] Snake game started');
+      const mySnake = data.gameState.snakes[socket.id];
+      if (mySnake) {
+        setSnakePlayerState(mySnake);
+        setChallengeData({ gameType: 'snake' });
+      }
+    });
+
+    socket.on('snake-player-init', (data) => {
+      console.log('[PlayerStoryScreen] Snake player init:', data);
+      setSnakePlayerState(prev => prev ? { ...prev, ...data } : data);
+    });
+
+    socket.on('snake-game-tick', (data) => {
+      const mySnake = data.snakes[socket.id];
+      if (mySnake) {
+        setSnakePlayerState(mySnake);
+
+        // Update respawn countdown
+        if (!mySnake.isAlive && mySnake.respawnAt) {
+          const countdown = mySnake.respawnAt - Date.now();
+          setSnakeRespawnCountdown(countdown > 0 ? countdown : 0);
+        } else {
+          setSnakeRespawnCountdown(0);
+        }
+      }
+    });
+
+    socket.on('snake-game-end', (data) => {
+      console.log('[PlayerStoryScreen] Snake game ended');
+      if (data.finalScores) {
+        setMyScore(data.finalScores[socket.id] || 0);
+      }
+      // Clear snake state
+      setSnakePlayerState(null);
+    });
+
     return () => {
       socket.off('game-state-update');
       socket.off('game-started');
@@ -130,8 +197,17 @@ function PlayerStoryScreen() {
       socket.off('scores-updated');
       socket.off('challenge-started');
       socket.off('connect4-update');
+      socket.off('snake-game-start');
+      socket.off('snake-player-init');
+      socket.off('snake-game-tick');
+      socket.off('snake-game-end');
     };
   }, [socket, roomCode]);
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('[PlayerStoryScreen] State:', { gameState, challengeData: challengeData?.gameType, snakePlayerState: !!snakePlayerState });
+  }, [gameState, challengeData, snakePlayerState]);
 
   // Spelling Bee Phase Sync: Listen for phase changes from Coordinator (TV)
   useEffect(() => {
@@ -215,6 +291,15 @@ function PlayerStoryScreen() {
     });
   };
 
+  const handleSnakeDirection = (direction) => {
+    if (!socket) return;
+
+    socket.emit('snake-direction', {
+      roomCode,
+      direction
+    });
+  };
+
   if (!roomCode || !socket) {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
@@ -277,9 +362,20 @@ function PlayerStoryScreen() {
                        pointerEvents: 'none'
                      }}></div>
 
-                <div className="relative z-10">
-                  {/* CONNECT 4 GAME */}
-                  {challengeData?.gameType === 'connect4' ? (
+                <div className="relative z-10 h-full flex flex-col">
+                  {/* SNAKE GAME */}
+                  {challengeData?.gameType === 'snake' && snakePlayerState ? (
+                    <SnakeController
+                      onDirectionChange={handleSnakeDirection}
+                      playerScore={snakePlayerState.score}
+                      playerColor={snakePlayerState.color}
+                      colorName={snakePlayerState.colorName}
+                      isAlive={snakePlayerState.isAlive}
+                      respawnCountdown={snakeRespawnCountdown}
+                      isInvincible={snakePlayerState.isInvincible}
+                    />
+                  ) : challengeData?.gameType === 'connect4' ? (
+                  /* CONNECT 4 GAME */
                     <div className="text-center">
                       {/* Icon */}
                       <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>
@@ -550,8 +646,8 @@ function PlayerStoryScreen() {
                     </div>
                   )}
 
-                  {/* Submit Button - disabled during listen/pause phases - Only for non-Connect4 games */}
-                  {challengeData?.gameType !== 'connect4' && (
+                  {/* Submit Button - disabled during listen/pause phases - Only for non-Connect4/Snake games */}
+                  {challengeData?.gameType !== 'connect4' && challengeData?.gameType !== 'snake' && (
                     <button
                       onClick={handleSubmitAnswer}
                       disabled={

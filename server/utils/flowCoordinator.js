@@ -48,7 +48,7 @@ class FlowCoordinator {
     });
 
     // Call state change callback if provided
-    if (this.onStateChange) {
+    if (this.onStateChange && typeof this.onStateChange === 'function') {
       this.onStateChange(this.roomCode, newState, io);
     }
 

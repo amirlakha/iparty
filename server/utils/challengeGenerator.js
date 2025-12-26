@@ -16,10 +16,16 @@ const {
   getNextPlayer
 } = require('./connect4Logic');
 
+const {
+  initializeGame: initializeSnakeGame,
+  GAME_DURATION: SNAKE_GAME_DURATION,
+  TICK_RATE: SNAKE_TICK_RATE,
+} = require('./snakeLogic');
+
 /**
  * Available game types
  */
-const GAME_TYPES = ['speed-math', 'true-false', 'trivia', 'spelling', 'connect4'];
+const GAME_TYPES = ['speed-math', 'true-false', 'trivia', 'spelling', 'connect4', 'snake'];
 
 /**
  * Generate a challenge for all players
@@ -117,6 +123,24 @@ function generateChallenge(round, section, players, gameType = null) {
         currentPlayer: firstPlayer,
         winner: null,
         isDraw: false,
+        answerType: 'interactive',
+        validationOptions: {}
+      };
+    }
+
+    case 'snake': {
+      const snakeGameState = initializeSnakeGame(players);
+
+      return {
+        ...baseChallenge,
+        type: 'snake',
+        gameType: 'snake',
+        timeLimit: SNAKE_GAME_DURATION,
+        tickRate: SNAKE_TICK_RATE,
+        board: snakeGameState.board,
+        snakes: snakeGameState.snakes,
+        food: snakeGameState.food,
+        config: snakeGameState.config,
         answerType: 'interactive',
         validationOptions: {}
       };

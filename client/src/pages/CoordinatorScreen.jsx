@@ -5,6 +5,7 @@ import christmasStory from '../data/christmasStory';
 import { QRCodeSVG } from 'qrcode.react';
 import CircularTimer from '../components/CircularTimer';
 import ProgressBar from '../components/ProgressBar';
+import SnakeGameBoard from '../components/SnakeGameBoard';
 
 function CoordinatorScreen() {
   const location = useLocation();
@@ -35,6 +36,9 @@ function CoordinatorScreen() {
   const [connect4WinningCells, setConnect4WinningCells] = useState([]);
   const [connect4IsDraw, setConnect4IsDraw] = useState(false);
   const [connect4Teams, setConnect4Teams] = useState(null);
+
+  // Snake game state
+  const [snakeGameState, setSnakeGameState] = useState(null);
 
   useEffect(() => {
     if (!socket || !roomCode) return;
@@ -105,6 +109,23 @@ function CoordinatorScreen() {
       }
     });
 
+    // Snake game events
+    socket.on('snake-game-start', (data) => {
+      console.log('[Snake] Game started:', data);
+      setSnakeGameState(data.gameState);
+    });
+
+    socket.on('snake-game-tick', (data) => {
+      setSnakeGameState(data);
+    });
+
+    socket.on('snake-game-end', (data) => {
+      console.log('[Snake] Game ended:', data);
+      if (data.finalScores) {
+        setScores(data.finalScores);
+      }
+    });
+
     return () => {
       socket.off('game-state-update');
       socket.off('player-joined');
@@ -115,6 +136,9 @@ function CoordinatorScreen() {
       socket.off('section-stars');
       socket.off('scores-updated');
       socket.off('connect4-update');
+      socket.off('snake-game-start');
+      socket.off('snake-game-tick');
+      socket.off('snake-game-end');
     };
   }, [socket, roomCode]);
 
@@ -626,8 +650,8 @@ function CoordinatorScreen() {
                   <div className="font-black text-yellow-300 drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
                     {section?.emoji} {section?.name} • Round {currentRound}
                   </div>
-                  {/* Only show timer for non-Connect4 games */}
-                  {currentChallenge?.gameType !== 'connect4' && (
+                  {/* Only show timer for non-Connect4/Snake games */}
+                  {currentChallenge?.gameType !== 'connect4' && currentChallenge?.gameType !== 'snake' && (
                     <CircularTimer key={`challenge-${timerKey}`} duration={60} size="medium" />
                   )}
                   <div className="font-black text-white drop-shadow-lg" style={{fontSize: 'clamp(0.875rem, 2vh, 2rem)'}}>
@@ -661,8 +685,8 @@ function CoordinatorScreen() {
                 <div className="relative z-10 text-center">
                   {currentChallenge ? (
                     <>
-                      {/* Game Title and Icon - Only for non-Connect4 games */}
-                      {currentChallenge.gameType !== 'connect4' && (
+                      {/* Game Title and Icon - Only for non-Connect4/Snake games */}
+                      {currentChallenge.gameType !== 'connect4' && currentChallenge.gameType !== 'snake' && (
                         <>
                           <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1.5rem)'}}>
                             {currentChallenge.gameType === 'speed-math' && '🧮'}
@@ -774,6 +798,14 @@ function CoordinatorScreen() {
                             </div>
                           </div>
                         </div>
+                      ) : currentChallenge.gameType === 'snake' && snakeGameState ? (
+                        /* SNAKE GAME */
+                        <SnakeGameBoard
+                          snakes={snakeGameState.snakes}
+                          food={snakeGameState.food}
+                          board={snakeGameState.board}
+                          timeRemaining={snakeGameState.timeRemaining}
+                        />
                       ) : currentChallenge.questions && currentChallenge.questions.length > 0 ? (
                         <>
                           {/* SPELLING BEE: Single unified panel (not per-tier) */}
