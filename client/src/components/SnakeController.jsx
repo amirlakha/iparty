@@ -13,7 +13,7 @@ function SnakeController({
   respawnCountdown,
   isInvincible,
 }) {
-  const [controlMode, setControlMode] = useState('dpad'); // 'dpad' or 'swipe'
+  const [controlMode] = useState('swipe'); // 'dpad' or 'swipe' - currently locked to swipe
   const touchStartRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -227,7 +227,9 @@ function SnakeController({
         )}
       </div>
 
-      {/* Control mode toggle */}
+      {/* Control mode toggle - hidden for now, swipe-only mode */}
+      {/* To re-enable: uncomment and add setControlMode back to useState */}
+      {/*
       <div
         className="w-full px-4 pb-4"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 1rem), 1rem)' }}
@@ -244,6 +246,7 @@ function SnakeController({
           {controlMode === 'dpad' ? 'Switch to Swipe 👆' : 'Switch to D-Pad ⬇️'}
         </button>
       </div>
+      */}
     </div>
   );
 }

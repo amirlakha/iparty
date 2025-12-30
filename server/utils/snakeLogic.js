@@ -8,7 +8,7 @@ const BOARD_WIDTH = 30;
 const BOARD_HEIGHT = 20;
 
 // Timing (milliseconds)
-const GAME_DURATION = 60000;
+const GAME_DURATION = 120000; // 2 minutes
 const TICK_RATE = 150;
 const RESPAWN_DELAY = 3000;
 const INVINCIBILITY_DURATION = 1500;
@@ -17,8 +17,7 @@ const FOOD_RESPAWN_DELAY = 1500;
 // Scoring
 const REGULAR_FOOD_POINTS = 10;
 const BONUS_FOOD_POINTS = 25;
-const DEATH_PENALTY_POINTS = 5;
-const DEATH_LENGTH_PENALTY = 0.25;
+const DEATH_PENALTY_POINTS = 30;
 const STAR_THRESHOLD = 50;
 
 // Food
@@ -28,7 +27,6 @@ const BONUS_FOOD_CHANCE = 0.15;
 
 // Snake
 const INITIAL_LENGTH = 3;
-const MIN_LENGTH = 3;
 
 // Snake colors (unique per player)
 const SNAKE_COLORS = [
@@ -465,12 +463,10 @@ function killSnake(snake, killerId, gameState, now) {
   snake.isAlive = false;
   snake.isInvincible = false;
 
-  // Apply death penalty
+  // Apply death penalty (score cannot go negative)
   snake.score = Math.max(0, snake.score - DEATH_PENALTY_POINTS);
 
-  // Reduce length
-  const newLength = Math.max(MIN_LENGTH, Math.floor(snake.segments.length * (1 - DEATH_LENGTH_PENALTY)));
-  snake.segments = snake.segments.slice(0, newLength);
+  // Note: Snake length resets to INITIAL_LENGTH (3) on respawn in respawnSnake()
 
   // Schedule respawn
   snake.respawnAt = now + RESPAWN_DELAY;
