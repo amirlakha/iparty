@@ -27,8 +27,8 @@ const {
 // ============================================================
 // DEVELOPMENT FLAG - Set game type for testing via environment variable
 // ============================================================
-// Usage: GAME_TYPE=true-false node server/index.js
-// Options: 'speed-math', 'true-false', 'trivia', 'spelling' (or leave unset for random)
+// Usage: GAME_TYPE=snake node server/index.js
+// Options: 'speed-math', 'true-false', 'trivia', 'spelling', 'connect4', 'snake' (or leave unset for rotation)
 const DEV_GAME_TYPE = process.env.GAME_TYPE || null;
 // ============================================================
 
@@ -1146,7 +1146,7 @@ const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`🎉 iParty server running on port ${PORT}`);
   console.log(`📱 Access from phones: http://192.168.68.72:${PORT}`);
-  console.log(`🎮 Game Type: ${DEV_GAME_TYPE || 'RANDOM (all 4 games)'}`);
+  console.log(`🎮 Game Type: ${DEV_GAME_TYPE || 'rotation (from config)'}`);
   if (DEV_GAME_TYPE) {
     console.log(`⚠️  DEVELOPMENT MODE: Testing ${DEV_GAME_TYPE} only`);
   }

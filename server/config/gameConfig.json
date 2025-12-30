@@ -1,0 +1,12 @@
+{
+  "quickGames": {
+    "speed-math": true,
+    "true-false": true,
+    "trivia": true,
+    "spelling": false
+  },
+  "longGames": {
+    "connect4": true,
+    "snake": true
+  }
+}

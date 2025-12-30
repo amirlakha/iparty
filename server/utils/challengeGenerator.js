@@ -22,10 +22,38 @@ const {
   TICK_RATE: SNAKE_TICK_RATE,
 } = require('./snakeLogic');
 
+const gameConfig = require('../config/gameConfig.json');
+
 /**
- * Available game types
+ * Get enabled games from config
+ */
+function getEnabledQuickGames() {
+  return Object.entries(gameConfig.quickGames)
+    .filter(([_, enabled]) => enabled)
+    .map(([id]) => id);
+}
+
+function getEnabledLongGames() {
+  return Object.entries(gameConfig.longGames)
+    .filter(([_, enabled]) => enabled)
+    .map(([id]) => id);
+}
+
+function getAllEnabledGames() {
+  return [...getEnabledQuickGames(), ...getEnabledLongGames()];
+}
+
+// Validate config on startup
+const enabledGames = getAllEnabledGames();
+if (enabledGames.length === 0) {
+  throw new Error('At least one game must be enabled in gameConfig.json');
+}
+console.log(`[Config] Enabled games: ${enabledGames.join(', ')}`);
+
+/**
+ * Available game types (all games, regardless of enabled status)
  * - Quick games (1-4 in each section): speed-math, true-false, trivia, spelling
- * - Big games (5th in each section): connect4, snake
+ * - Long games (5th in each section): connect4, snake
  */
 const QUICK_GAMES = ['speed-math', 'true-false', 'trivia', 'spelling'];
 const BIG_GAMES = ['connect4', 'snake'];
@@ -43,17 +71,38 @@ const GAME_TYPES = [...QUICK_GAMES, ...BIG_GAMES];
  */
 function generateChallenge(round, section, players, gameType = null) {
   // Pick game type based on round position in section if not specified
-  // Rounds 1-4: cycle through quick games in order (speed-math, true-false, trivia, spelling)
-  // Round 5: alternate between big games (odd sections=connect4, even sections=snake)
+  // Rounds 1-4: cycle through quick games (from enabled pool)
+  // Round 5: cycle through long games (from enabled pool)
+  // If a pool is empty, use games from the other pool
   if (!gameType) {
+    const enabledQuick = getEnabledQuickGames();
+    const enabledLong = getEnabledLongGames();
+    const allEnabled = getAllEnabledGames();
+
     const roundInSection = ((round - 1) % 5) + 1; // 1-5
+
     if (roundInSection === 5) {
-      // 5th game: alternate between big games based on section number
-      // Odd sections (1,3,5) = connect4, Even sections (2,4) = snake
-      gameType = section % 2 === 1 ? 'connect4' : 'snake';
+      // 5th game: use long games pool, or fall back to all enabled
+      if (enabledLong.length > 0) {
+        // Cycle through enabled long games based on section number
+        const longIndex = (section - 1) % enabledLong.length;
+        gameType = enabledLong[longIndex];
+      } else {
+        // No long games enabled, use from all enabled games
+        const index = (section - 1) % allEnabled.length;
+        gameType = allEnabled[index];
+      }
     } else {
-      // Games 1-4: cycle through quick games in order
-      gameType = QUICK_GAMES[roundInSection - 1];
+      // Games 1-4: use quick games pool, or fall back to all enabled
+      if (enabledQuick.length > 0) {
+        // Cycle through enabled quick games
+        const quickIndex = (roundInSection - 1) % enabledQuick.length;
+        gameType = enabledQuick[quickIndex];
+      } else {
+        // No quick games enabled, use from all enabled games
+        const index = (roundInSection - 1) % allEnabled.length;
+        gameType = allEnabled[index];
+      }
     }
   }
 
