@@ -22,7 +22,64 @@ const {
   TICK_RATE: SNAKE_TICK_RATE,
 } = require('./snakeLogic');
 
+const { wordScrambleWords, getRandomQuestion } = require('../data/questionPools');
+
 const gameConfig = require('../config/gameConfig.json');
+
+/**
+ * Scramble a word ensuring it's different from the original
+ * Uses Fisher-Yates shuffle for better randomization
+ */
+function scrambleWord(word) {
+  const letters = word.toUpperCase().split('');
+  let scrambled;
+  let attempts = 0;
+  const maxAttempts = 100;
+
+  do {
+    for (let i = letters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [letters[i], letters[j]] = [letters[j], letters[i]];
+    }
+    scrambled = letters.join('');
+    attempts++;
+  } while (scrambled === word.toUpperCase() && word.length > 1 && attempts < maxAttempts);
+
+  return scrambled;
+}
+
+/**
+ * Generate word scramble round with per-tier questions
+ */
+function generateWordScrambleRound(players) {
+  // Group players by age tier
+  const tiers = {
+    young: players.filter(p => (p.age || 10) <= 9),
+    middle: players.filter(p => (p.age || 10) >= 10 && (p.age || 10) <= 12),
+    teen: players.filter(p => (p.age || 10) >= 13)
+  };
+
+  const questions = [];
+  const usedWords = [];
+
+  // Generate question for each tier that has players
+  Object.entries(tiers).forEach(([tier, tierPlayers]) => {
+    if (tierPlayers.length === 0) return;
+
+    const wordData = getRandomQuestion(wordScrambleWords[tier], usedWords);
+    usedWords.push(wordData);
+
+    questions.push({
+      tier,
+      players: tierPlayers.map(p => ({ id: p.id, name: p.name })),
+      question: scrambleWord(wordData.word), // The scrambled word is the "question"
+      answer: wordData.word.toLowerCase(),
+      hint: wordData.hint
+    });
+  });
+
+  return { questions };
+}
 
 /**
  * Get enabled games from config
@@ -55,7 +112,7 @@ console.log(`[Config] Enabled games: ${enabledGames.join(', ')}`);
  * - Quick games (1-4 in each section): speed-math, true-false, trivia, spelling
  * - Long games (5th in each section): connect4, snake
  */
-const QUICK_GAMES = ['speed-math', 'true-false', 'trivia', 'spelling'];
+const QUICK_GAMES = ['speed-math', 'true-false', 'trivia', 'spelling', 'word-scramble'];
 const BIG_GAMES = ['connect4', 'snake'];
 const GAME_TYPES = [...QUICK_GAMES, ...BIG_GAMES];
 
@@ -161,6 +218,21 @@ function generateChallenge(round, section, players, gameType = null) {
         gameType: 'spelling',
         questions: spellingRound.questions,
         phases: spellingRound.phases, // IMPORTANT: Include phases for audio timing
+        answerType: 'text',
+        validationOptions: {
+          caseSensitive: false,
+          fuzzyMatch: false
+        }
+      };
+    }
+
+    case 'word-scramble': {
+      const wordScrambleRound = generateWordScrambleRound(players);
+      return {
+        ...baseChallenge,
+        type: 'word-scramble',
+        gameType: 'word-scramble',
+        questions: wordScrambleRound.questions,
         answerType: 'text',
         validationOptions: {
           caseSensitive: false,

@@ -40,6 +40,10 @@ function PlayerStoryScreen() {
   const [snakePlayerState, setSnakePlayerState] = useState(null);
   const [snakeRespawnCountdown, setSnakeRespawnCountdown] = useState(0);
 
+  // Word Scramble state
+  const [showWordScrambleHint, setShowWordScrambleHint] = useState(false);
+  const [displayedScramble, setDisplayedScramble] = useState('');
+
   useEffect(() => {
     console.log('[PlayerStoryScreen] useEffect triggered');
     console.log('[PlayerStoryScreen] Socket:', socket?.id, 'Room:', roomCode);
@@ -89,6 +93,12 @@ function PlayerStoryScreen() {
         setSpellingPhase('listen');
       } else {
         setSpellingPhase(null);
+      }
+
+      // Initialize word scramble state
+      if (data.gameType === 'word-scramble') {
+        setDisplayedScramble(data.question); // Start with server's scramble
+        setShowWordScrambleHint(false); // Reset hint visibility
       }
     });
 
@@ -209,6 +219,19 @@ function PlayerStoryScreen() {
     console.log('[PlayerStoryScreen] State:', { gameState, challengeData: challengeData?.gameType, snakePlayerState: !!snakePlayerState });
   }, [gameState, challengeData, snakePlayerState]);
 
+  // Word Scramble: Show hint after 30 seconds
+  useEffect(() => {
+    if (!challengeData || challengeData.gameType !== 'word-scramble' || gameState !== 'CHALLENGE_ACTIVE') {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowWordScrambleHint(true);
+    }, 30000); // 30 seconds
+
+    return () => clearTimeout(timer);
+  }, [challengeData, gameState]);
+
   // Spelling Bee Phase Sync: Listen for phase changes from Coordinator (TV)
   useEffect(() => {
     if (!socket || !challengeData || challengeData.gameType !== 'spelling') return;
@@ -263,6 +286,19 @@ function PlayerStoryScreen() {
       }
     };
   }, [socket, challengeData, submitted, answer]);
+
+  // Word Scramble: Re-shuffle the displayed letters
+  const handleRescramble = () => {
+    if (!displayedScramble) return;
+
+    const letters = displayedScramble.split('');
+    // Fisher-Yates shuffle
+    for (let i = letters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [letters[i], letters[j]] = [letters[j], letters[i]];
+    }
+    setDisplayedScramble(letters.join(''));
+  };
 
   const handleSubmitAnswer = () => {
     if (!socket || submitted || !answer.trim()) return;
@@ -471,8 +507,9 @@ function PlayerStoryScreen() {
                         <div style={{fontSize: 'clamp(2rem, 6vh, 4rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)'}}>
                           {challengeData?.operation && '🧮'}
                           {challengeData?.options && '🎯'}
-                          {challengeData?.hint && '✏️'}
-                          {(!challengeData?.operation && !challengeData?.options && !challengeData?.hint && currentQuestion) && '✅'}
+                          {challengeData?.gameType === 'word-scramble' && '🔤'}
+                          {challengeData?.hint && challengeData?.phases && '✏️'}
+                          {(!challengeData?.operation && !challengeData?.options && challengeData?.gameType !== 'word-scramble' && !challengeData?.phases && currentQuestion) && '✅'}
                           {!currentQuestion && '📺'}
                         </div>
 
@@ -577,8 +614,51 @@ function PlayerStoryScreen() {
                           </>
                         )}
 
+                        {/* Word Scramble: show scrambled letters */}
+                        {challengeData?.gameType === 'word-scramble' && (
+                          <>
+                            <h2 className="font-black text-purple-600" style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)', marginBottom: 'clamp(0.5rem, 1vh, 1rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
+                              Unscramble:
+                            </h2>
+                            <div className="flex justify-center items-center flex-wrap gap-1 md:gap-2 mb-3">
+                              {(displayedScramble || currentQuestion).split('').map((letter, idx) => (
+                                <div
+                                  key={idx}
+                                  className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-lg border-2 border-white flex items-center justify-center"
+                                  style={{
+                                    width: 'clamp(2rem, 6vh, 3.5rem)',
+                                    height: 'clamp(2rem, 6vh, 3.5rem)',
+                                  }}
+                                >
+                                  <span className="font-black text-white"
+                                        style={{fontSize: 'clamp(1rem, 3vh, 2rem)', textShadow: '1px 1px 2px rgba(0,0,0,0.3)'}}>
+                                    {letter}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            {/* Scramble button */}
+                            <button
+                              onClick={handleRescramble}
+                              className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl px-4 py-2 mb-3 shadow-lg hover:from-indigo-600 hover:to-purple-600 active:scale-95 transition-all"
+                              style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)'}}
+                            >
+                              🔀 Shuffle Letters
+                            </button>
+                            {/* Hint - only shown after 30 seconds */}
+                            {challengeData.hint && showWordScrambleHint && (
+                              <p className="text-yellow-600 font-bold mb-2 animate-pulse" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                                💡 Hint: {challengeData.hint}
+                              </p>
+                            )}
+                            <p className="text-purple-600 font-bold" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)', textShadow: '0 1px 2px rgba(255,255,255,0.9)'}}>
+                              Type the word below
+                            </p>
+                          </>
+                        )}
+
                         {/* True/False: show statement */}
-                        {!challengeData?.operation && !challengeData?.options && !challengeData?.hint && (
+                        {challengeData?.gameType === 'true-false' && (
                           <>
                             <h2 className="font-black text-gray-900 mb-4" style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)', textShadow: '0 2px 4px rgba(255,255,255,0.9)'}}>
                               {currentQuestion}
@@ -625,8 +705,8 @@ function PlayerStoryScreen() {
                     )}
                   </div>
 
-                  {/* Answer Input - only for Speed Math and Spelling (answer phase only) */}
-                  {(challengeData?.operation || (challengeData?.hint && spellingPhase === 'answer')) && (
+                  {/* Answer Input - for Speed Math, Spelling (answer phase only), and Word Scramble */}
+                  {(challengeData?.operation || (challengeData?.hint && challengeData?.phases && spellingPhase === 'answer') || challengeData?.gameType === 'word-scramble') && (
                     <div style={{display: 'flex', flexDirection: 'column', gap: 'clamp(0.75rem, 1.5vh, 1.5rem)'}}>
                       <input
                         type="text"
@@ -637,7 +717,7 @@ function PlayerStoryScreen() {
                         style={{padding: 'clamp(1rem, 2vh, 1.5rem)', fontSize: 'clamp(1.25rem, 2.5vh, 2rem)'}}
                         onKeyPress={(e) => e.key === 'Enter' && handleSubmitAnswer()}
                         autoFocus
-                        disabled={challengeData?.hint && spellingPhase !== 'answer'}
+                        disabled={challengeData?.hint && challengeData?.phases && spellingPhase !== 'answer'}
                         autocomplete="off"
                         autocorrect="off"
                         autocapitalize="off"
@@ -653,17 +733,17 @@ function PlayerStoryScreen() {
                       disabled={
                         !answer ||
                         (typeof answer === 'string' && !answer.trim()) ||
-                        (challengeData?.hint && spellingPhase !== 'answer')
+                        (challengeData?.hint && challengeData?.phases && spellingPhase !== 'answer')
                       }
                       className={`w-full rounded-2xl font-black shadow-2xl border-4 border-white transition-all ${
-                        (!answer || (typeof answer === 'string' && !answer.trim()) || (challengeData?.hint && spellingPhase !== 'answer'))
+                        (!answer || (typeof answer === 'string' && !answer.trim()) || (challengeData?.hint && challengeData?.phases && spellingPhase !== 'answer'))
                           ? 'bg-gray-400 cursor-not-allowed opacity-50'
                           : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white active:scale-95'
                       }`}
                       style={{padding: 'clamp(1.25rem, 3vh, 2rem)', fontSize: 'clamp(1.5rem, 3vh, 2.5rem)'}}
                     >
-                      {challengeData?.hint && spellingPhase === 'listen' ? '🎧 Listening...' :
-                       challengeData?.hint && spellingPhase === 'pause' ? '⏸️ Get Ready...' :
+                      {challengeData?.hint && challengeData?.phases && spellingPhase === 'listen' ? '🎧 Listening...' :
+                       challengeData?.hint && challengeData?.phases && spellingPhase === 'pause' ? '⏸️ Get Ready...' :
                        'Submit Answer'}
                     </button>
                   )}

@@ -40,6 +40,9 @@ function CoordinatorScreen() {
   // Snake game state
   const [snakeGameState, setSnakeGameState] = useState(null);
 
+  // Word Scramble hint delay (show after 30 seconds)
+  const [showWordScrambleHint, setShowWordScrambleHint] = useState(false);
+
   useEffect(() => {
     if (!socket || !roomCode) return;
 
@@ -68,6 +71,7 @@ function CoordinatorScreen() {
 
     socket.on('challenge-started', (data) => {
       setCurrentChallenge(data.challenge);
+      setShowWordScrambleHint(false); // Reset hint visibility for new challenge
       console.log('[Coordinator] Received challenge with', data.challenge.questions?.length, 'age tiers');
     });
 
@@ -141,6 +145,19 @@ function CoordinatorScreen() {
       socket.off('snake-game-end');
     };
   }, [socket, roomCode]);
+
+  // Word Scramble: Show hint after 30 seconds
+  useEffect(() => {
+    if (!currentChallenge || currentChallenge.gameType !== 'word-scramble' || gameState !== 'CHALLENGE_ACTIVE') {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowWordScrambleHint(true);
+    }, 30000); // 30 seconds
+
+    return () => clearTimeout(timer);
+  }, [currentChallenge, gameState]);
 
   // Spelling Bee Audio Flow: TV plays audio for everyone to hear
   useEffect(() => {
@@ -693,6 +710,7 @@ function CoordinatorScreen() {
                             {currentChallenge.gameType === 'true-false' && '✅'}
                             {currentChallenge.gameType === 'trivia' && '🎯'}
                             {currentChallenge.gameType === 'spelling' && '✏️'}
+                            {currentChallenge.gameType === 'word-scramble' && '🔤'}
                           </div>
                           <h3 className="font-black text-gray-900 leading-tight px-2 mb-4"
                               style={{
@@ -703,6 +721,7 @@ function CoordinatorScreen() {
                             {currentChallenge.gameType === 'true-false' && 'True or False'}
                             {currentChallenge.gameType === 'trivia' && 'Christmas Trivia'}
                             {currentChallenge.gameType === 'spelling' && 'Spelling Bee'}
+                            {currentChallenge.gameType === 'word-scramble' && 'Word Scramble'}
                           </h3>
                         </>
                       )}
@@ -963,6 +982,35 @@ function CoordinatorScreen() {
                                           </div>
                                         ))}
                                       </div>
+                                    </div>
+                                  )}
+
+                                  {/* Word Scramble: show scrambled letters + hint */}
+                                  {currentChallenge.gameType === 'word-scramble' && (
+                                    <div>
+                                      <div className="flex justify-center items-center flex-wrap gap-1 md:gap-2 mb-2">
+                                        {tierData.question.split('').map((letter, idx) => (
+                                          <div
+                                            key={idx}
+                                            className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-lg border-2 border-white flex items-center justify-center"
+                                            style={{
+                                              width: 'clamp(2rem, 5vh, 4rem)',
+                                              height: 'clamp(2rem, 5vh, 4rem)',
+                                            }}
+                                          >
+                                            <span className="font-black text-white"
+                                                  style={{fontSize: 'clamp(1rem, 3vh, 2.5rem)', textShadow: '1px 1px 2px rgba(0,0,0,0.3)'}}>
+                                              {letter}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {tierData.hint && showWordScrambleHint && (
+                                        <div className="text-yellow-700 font-bold animate-pulse"
+                                             style={{fontSize: 'clamp(0.875rem, 1.5vh, 1.25rem)'}}>
+                                          💡 {tierData.hint}
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </div>

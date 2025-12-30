@@ -1052,6 +1052,97 @@ const spellingWords = {
 };
 
 /**
+ * WORD SCRAMBLE WORDS
+ * Christmas-themed words for unscrambling - different from spelling words
+ */
+const wordScrambleWords = {
+  young: [
+    // 3-5 letter simple Christmas words
+    { word: "elf", hint: "Santa's little helper" },
+    { word: "star", hint: "Shines on top of the tree" },
+    { word: "gift", hint: "Something you give to someone" },
+    { word: "bell", hint: "Makes a ringing sound" },
+    { word: "joy", hint: "A feeling of happiness" },
+    { word: "red", hint: "Santa's suit color" },
+    { word: "cold", hint: "The opposite of hot" },
+    { word: "wrap", hint: "Cover a present with paper" },
+    { word: "bow", hint: "Pretty ribbon on a gift" },
+    { word: "hat", hint: "Santa wears a red one" },
+    { word: "sled", hint: "Slides on snow" },
+    { word: "sing", hint: "Make music with your voice" },
+    { word: "card", hint: "You send it with holiday wishes" },
+    { word: "toy", hint: "Something to play with" },
+    { word: "sock", hint: "Hang it by the fireplace" },
+    { word: "cake", hint: "Sweet birthday dessert" },
+    { word: "wish", hint: "What you want for Christmas" },
+    { word: "love", hint: "A warm feeling in your heart" },
+    { word: "hug", hint: "Wrap your arms around someone" },
+    { word: "warm", hint: "Cozy by the fire" },
+    { word: "home", hint: "Where family gathers" },
+    { word: "give", hint: "Share with others" },
+    { word: "nice", hint: "Being kind and good" },
+    { word: "snow", hint: "White stuff that falls in winter" },
+    { word: "tree", hint: "You decorate it at Christmas" }
+  ],
+  middle: [
+    // 5-7 letter moderate vocabulary
+    { word: "candle", hint: "Wax light that flickers" },
+    { word: "tinsel", hint: "Shiny strings on the tree" },
+    { word: "sleigh", hint: "Santa's flying vehicle" },
+    { word: "wreath", hint: "Circular decoration for the door" },
+    { word: "cookie", hint: "Baked treat for Santa" },
+    { word: "chimney", hint: "Santa comes down this" },
+    { word: "winter", hint: "The coldest season" },
+    { word: "frosty", hint: "The famous snowman" },
+    { word: "jingle", hint: "Sound of bells ringing" },
+    { word: "merry", hint: "Happy and cheerful" },
+    { word: "bright", hint: "Full of light" },
+    { word: "spirit", hint: "The feeling of the holiday" },
+    { word: "giving", hint: "Sharing with others" },
+    { word: "family", hint: "People who love you" },
+    { word: "garland", hint: "Decorative rope of greenery" },
+    { word: "icicle", hint: "Frozen water hanging down" },
+    { word: "mitten", hint: "Keeps your hands warm" },
+    { word: "scarf", hint: "Wrap it around your neck" },
+    { word: "carols", hint: "Christmas songs" },
+    { word: "lights", hint: "Colorful bulbs on the tree" },
+    { word: "holly", hint: "Plant with red berries" },
+    { word: "angel", hint: "Heavenly being on the tree" },
+    { word: "cheer", hint: "Happy holiday mood" },
+    { word: "festive", hint: "Celebrating the holiday" },
+    { word: "cocoa", hint: "Hot chocolate drink" }
+  ],
+  teen: [
+    // 7-10 letter advanced vocabulary
+    { word: "mistletoe", hint: "Plant you kiss under" },
+    { word: "snowflake", hint: "Unique ice crystal" },
+    { word: "reindeer", hint: "Pulls the sleigh" },
+    { word: "ornament", hint: "Decoration for the tree" },
+    { word: "celebrate", hint: "Honor a special occasion" },
+    { word: "tradition", hint: "Custom passed down over time" },
+    { word: "december", hint: "Christmas month" },
+    { word: "fireplace", hint: "Where stockings are hung" },
+    { word: "gingerbread", hint: "Cookie house material" },
+    { word: "poinsettia", hint: "Red and green Christmas plant" },
+    { word: "nutcracker", hint: "Wooden soldier decoration" },
+    { word: "caroling", hint: "Singing door-to-door" },
+    { word: "evergreen", hint: "Tree that stays green" },
+    { word: "yuletide", hint: "Old word for Christmas season" },
+    { word: "stocking", hint: "Hung by the chimney" },
+    { word: "blizzard", hint: "Severe snowstorm" },
+    { word: "snowman", hint: "Made of three snowballs" },
+    { word: "holiday", hint: "Special celebration day" },
+    { word: "presents", hint: "Gifts under the tree" },
+    { word: "thankful", hint: "Feeling grateful" },
+    { word: "wonderful", hint: "Amazing and great" },
+    { word: "memories", hint: "Things you remember" },
+    { word: "blessing", hint: "Something good given to you" },
+    { word: "gathering", hint: "Coming together" },
+    { word: "grateful", hint: "Feeling thankful" }
+  ]
+};
+
+/**
  * Helper function to get random question from a pool
  */
 function getRandomQuestion(pool, usedQuestions = []) {
@@ -1064,5 +1155,6 @@ module.exports = {
   trueFalseQuestions,
   triviaQuestions,
   spellingWords,
+  wordScrambleWords,
   getRandomQuestion
 };

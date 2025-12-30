@@ -11,6 +11,7 @@ const GAME_TYPE_CONFIG = {
   'true-false': { name: 'True or False', emoji: '✅', color: 'from-green-500 to-teal-600' },
   'speed-math': { name: 'Speed Math', emoji: '🧮', color: 'from-blue-500 to-indigo-600' },
   spelling: { name: 'Spelling Bee', emoji: '✏️', color: 'from-yellow-500 to-orange-600' },
+  'word-scramble': { name: 'Word Scramble', emoji: '🔤', color: 'from-purple-500 to-pink-600' },
 };
 
 function PreviewGame() {
@@ -36,6 +37,9 @@ function PreviewGame() {
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState([]);
   const [scores, setScores] = useState({});
+
+  // Word Scramble hint delay
+  const [showWordScrambleHint, setShowWordScrambleHint] = useState(false);
 
   const config = GAME_TYPE_CONFIG[gameType] || { name: gameType, emoji: '🎮', color: 'from-gray-500 to-gray-600' };
 
@@ -66,6 +70,7 @@ function PreviewGame() {
       console.log('[Preview] Challenge data:', data.challenge);
       setCurrentChallenge(data.challenge);
       setGameStarted(true);
+      setShowWordScrambleHint(false); // Reset hint for new challenge
 
       // For snake, initialize from challenge data immediately
       if (data.challenge.gameType === 'snake') {
@@ -162,6 +167,19 @@ function PreviewGame() {
 
     return () => clearInterval(interval);
   }, [gameStarted, currentChallenge]);
+
+  // Word Scramble: Show hint after 30 seconds
+  useEffect(() => {
+    if (!currentChallenge || currentChallenge.gameType !== 'word-scramble' || !gameStarted) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowWordScrambleHint(true);
+    }, 30000); // 30 seconds
+
+    return () => clearTimeout(timer);
+  }, [currentChallenge, gameStarted]);
 
   const handleStartGame = () => {
     if (!socket || players.length < 1) return;
@@ -367,7 +385,7 @@ function PreviewGame() {
                   </div>
                 </div>
               </div>
-            ) : /* SPEED MATH, TRUE/FALSE, TRIVIA */
+            ) : /* SPEED MATH, TRUE/FALSE, TRIVIA, WORD SCRAMBLE */
             currentChallenge?.questions?.length > 0 ? (
               <div className="w-full max-w-4xl space-y-4">
                 {currentChallenge.questions.map((tierData, idx) => (
@@ -429,6 +447,30 @@ function PreviewGame() {
                           <div className="text-lg text-white/60 mt-2">
                             Hint: {tierData.hint}
                           </div>
+                        </div>
+                      )}
+
+                      {/* Word Scramble */}
+                      {gameType === 'word-scramble' && (
+                        <div>
+                          <div className="flex justify-center items-center flex-wrap gap-2 mb-4">
+                            {tierData.question.split('').map((letter, i) => (
+                              <div
+                                key={i}
+                                className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg border-2 border-white flex items-center justify-center"
+                                style={{ width: '3rem', height: '3rem' }}
+                              >
+                                <span className="font-black text-white text-2xl">
+                                  {letter}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          {tierData.hint && showWordScrambleHint && (
+                            <div className="text-yellow-300 font-bold animate-pulse">
+                              💡 Hint: {tierData.hint}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

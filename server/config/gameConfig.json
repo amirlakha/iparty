@@ -3,7 +3,8 @@
     "speed-math": true,
     "true-false": true,
     "trivia": true,
-    "spelling": false
+    "spelling": false,
+    "word-scramble": true
   },
   "longGames": {
     "connect4": true,
