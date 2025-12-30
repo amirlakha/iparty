@@ -399,17 +399,12 @@ function handleChallengeActive(roomCode, io, forcedGameType = null) {
 
   if (!game || !flowCoordinator) return;
 
-  // Determine game type: cycle through all 6 types in each section
-  // Each section has 6 rounds, so rounds 1-6 in section get one of each game type
-  let gameType = forcedGameType || DEV_GAME_TYPE; // Use forced type, or dev override if set
+  // Determine game type: use forced type or dev override, otherwise let challengeGenerator decide
+  // challengeGenerator uses: games 1-4 = quick games, game 5 = big game (connect4/snake)
+  const gameType = forcedGameType || DEV_GAME_TYPE || null;
 
-  if (!gameType) {
-    // Cycle through game types: each section plays all 6 types
-    const gameTypes = ['speed-math', 'true-false', 'trivia', 'spelling', 'connect4', 'snake'];
-    const roundInSection = ((flowCoordinator.currentRound - 1) % 6); // 0-5
-    gameType = gameTypes[roundInSection];
-    console.log(`[${roomCode}] Round ${flowCoordinator.currentRound}, Section ${flowCoordinator.currentSection}, Round in section: ${roundInSection + 1}/6, Game type: ${gameType}`);
-  }
+  const roundInSection = ((flowCoordinator.currentRound - 1) % 5) + 1; // 1-5
+  console.log(`[${flowCoordinator.roomCode}] Round ${flowCoordinator.currentRound}, Section ${flowCoordinator.currentSection}, Round in section: ${roundInSection}/5`);
 
   // Generate age-adaptive challenge with determined game type
   const challenge = generateChallenge(

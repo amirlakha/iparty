@@ -24,8 +24,12 @@ const {
 
 /**
  * Available game types
+ * - Quick games (1-4 in each section): speed-math, true-false, trivia, spelling
+ * - Big games (5th in each section): connect4, snake
  */
-const GAME_TYPES = ['speed-math', 'true-false', 'trivia', 'spelling', 'connect4', 'snake'];
+const QUICK_GAMES = ['speed-math', 'true-false', 'trivia', 'spelling'];
+const BIG_GAMES = ['connect4', 'snake'];
+const GAME_TYPES = [...QUICK_GAMES, ...BIG_GAMES];
 
 /**
  * Generate a challenge for all players
@@ -38,9 +42,19 @@ const GAME_TYPES = ['speed-math', 'true-false', 'trivia', 'spelling', 'connect4'
  * @returns {Object} Challenge object with questions for each age tier
  */
 function generateChallenge(round, section, players, gameType = null) {
-  // Pick random game type if not specified
+  // Pick game type based on round position in section if not specified
+  // Rounds 1-4: cycle through quick games in order (speed-math, true-false, trivia, spelling)
+  // Round 5: alternate between big games (odd sections=connect4, even sections=snake)
   if (!gameType) {
-    gameType = GAME_TYPES[Math.floor(Math.random() * GAME_TYPES.length)];
+    const roundInSection = ((round - 1) % 5) + 1; // 1-5
+    if (roundInSection === 5) {
+      // 5th game: alternate between big games based on section number
+      // Odd sections (1,3,5) = connect4, Even sections (2,4) = snake
+      gameType = section % 2 === 1 ? 'connect4' : 'snake';
+    } else {
+      // Games 1-4: cycle through quick games in order
+      gameType = QUICK_GAMES[roundInSection - 1];
+    }
   }
 
   const baseChallenge = {
@@ -162,4 +176,4 @@ function generateChallenge(round, section, players, gameType = null) {
   }
 }
 
-module.exports = { generateChallenge, GAME_TYPES };
+module.exports = { generateChallenge, GAME_TYPES, QUICK_GAMES, BIG_GAMES };
