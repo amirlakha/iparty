@@ -738,8 +738,17 @@ io.on('connection', (socket) => {
 
     games.set(roomCode, game);
 
-    // Create flow coordinator but we won't use its normal flow
-    const flowCoordinator = new FlowCoordinator(roomCode, game);
+    // Create flow coordinator with callback for preview mode
+    const flowCoordinator = new FlowCoordinator(roomCode, (roomCode, newState, ioInstance) => {
+      const previewGame = games.get(roomCode);
+      if (!previewGame || !previewGame.isPreviewMode) return;
+
+      // When challenge time expires, grade and show results
+      if (newState === GameState.CHALLENGE_RESULTS) {
+        console.log(`[${roomCode}] Preview mode - timer expired, grading submissions`);
+        gradeAndAdvance(roomCode, ioInstance);
+      }
+    });
     flowCoordinators.set(roomCode, flowCoordinator);
 
     socket.join(roomCode);
@@ -785,16 +794,12 @@ io.on('connection', (socket) => {
     setTimeout(() => {
       // Set state to challenge active
       game.gameState = GameState.CHALLENGE_ACTIVE;
-      flowCoordinator.currentState = GameState.CHALLENGE_ACTIVE;
       flowCoordinator.currentRound = 1;
       flowCoordinator.currentSection = 1;
+      flowCoordinator.totalPlayers = game.players.length;
 
-      // Broadcast state update
-      io.to(roomCode).emit('game-state-update', {
-        state: GameState.CHALLENGE_ACTIVE,
-        round: 1,
-        section: 1
-      });
+      // Use transitionTo to properly trigger timer scheduling
+      flowCoordinator.transitionTo(io, GameState.CHALLENGE_ACTIVE);
 
       // Generate and start the challenge directly
       handleChallengeActive(roomCode, io, gameType);
@@ -1033,6 +1038,17 @@ function gradeAndAdvance(roomCode, io) {
       scores: game.scores
     });
 
+    // For preview mode, don't auto-advance
+    if (game.isPreviewMode) {
+      console.log(`[${roomCode}] Preview mode - stopping at Connect 4 results`);
+      io.to(roomCode).emit('preview-game-ended', {
+        results: [],
+        scores: game.scores,
+        gameType: 'connect4'
+      });
+      return;
+    }
+
     // Transition to results display
     flowCoordinator.transitionTo(io, 'CHALLENGE_RESULTS');
     return;
@@ -1049,6 +1065,17 @@ function gradeAndAdvance(roomCode, io) {
       results: [],
       scores: game.scores
     });
+
+    // For preview mode, don't auto-advance
+    if (game.isPreviewMode) {
+      console.log(`[${roomCode}] Preview mode - stopping at Snake results`);
+      io.to(roomCode).emit('preview-game-ended', {
+        results: [],
+        scores: game.scores,
+        gameType: 'snake'
+      });
+      return;
+    }
 
     // Transition to results display
     flowCoordinator.transitionTo(io, 'CHALLENGE_RESULTS');
@@ -1137,6 +1164,17 @@ function gradeAndAdvance(roomCode, io) {
       answer: s.answer
     }))
   });
+
+  // For preview mode, don't auto-advance - just show results
+  if (game.isPreviewMode) {
+    console.log(`[${roomCode}] Preview mode - stopping at results`);
+    io.to(roomCode).emit('preview-game-ended', {
+      results,
+      scores: game.scores,
+      gameType: challenge.gameType
+    });
+    return;
+  }
 
   // Transition to results state (this will auto-advance after timing.resultsDisplay)
   flowCoordinator.transitionTo(io, GameState.CHALLENGE_RESULTS);

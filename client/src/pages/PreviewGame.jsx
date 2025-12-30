@@ -31,6 +31,12 @@ function PreviewGame() {
   const [connect4Winner, setConnect4Winner] = useState(null);
   const [connect4Teams, setConnect4Teams] = useState(null);
 
+  // Timer and results state
+  const [timeRemaining, setTimeRemaining] = useState(60);
+  const [showResults, setShowResults] = useState(false);
+  const [results, setResults] = useState([]);
+  const [scores, setScores] = useState({});
+
   const config = GAME_TYPE_CONFIG[gameType] || { name: gameType, emoji: '🎮', color: 'from-gray-500 to-gray-600' };
 
   // Generate join URL
@@ -71,6 +77,15 @@ function PreviewGame() {
           timeRemaining: data.challenge.timeLimit,
         });
       }
+
+      // For connect4, initialize from challenge data
+      if (data.challenge.gameType === 'connect4') {
+        console.log('[Preview] Initializing connect4 state from challenge');
+        setConnect4Board(data.challenge.board);
+        setConnect4CurrentPlayer(data.challenge.currentPlayer);
+        setConnect4Teams(data.challenge.teams);
+        setConnect4Winner(null);
+      }
     });
 
     // Snake events
@@ -101,6 +116,20 @@ function PreviewGame() {
       setConnect4Teams(data.teams);
     });
 
+    // Results events
+    socket.on('challenge-results', (data) => {
+      console.log('[Preview] Challenge results:', data);
+      setResults(data.results || []);
+      setScores(data.scores || {});
+    });
+
+    socket.on('preview-game-ended', (data) => {
+      console.log('[Preview] Game ended:', data);
+      setResults(data.results || []);
+      setScores(data.scores || {});
+      setShowResults(true);
+    });
+
     return () => {
       socket.off('preview-game-created');
       socket.off('player-joined');
@@ -109,8 +138,30 @@ function PreviewGame() {
       socket.off('snake-game-tick');
       socket.off('snake-game-end');
       socket.off('connect4-update');
+      socket.off('challenge-results');
+      socket.off('preview-game-ended');
     };
   }, [socket, gameType]);
+
+  // Timer countdown for quick games
+  useEffect(() => {
+    if (!gameStarted || !currentChallenge) return;
+    // Don't run timer for interactive games (snake/connect4 handle their own timing)
+    if (currentChallenge.gameType === 'snake' || currentChallenge.gameType === 'connect4') return;
+
+    setTimeRemaining(60);
+    const interval = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [gameStarted, currentChallenge]);
 
   const handleStartGame = () => {
     if (!socket || players.length < 1) return;
@@ -124,6 +175,17 @@ function PreviewGame() {
     setConnect4Board(null);
     setConnect4Winner(null);
     setCurrentChallenge(null);
+    setShowResults(false);
+    setResults([]);
+    setTimeRemaining(60);
+  };
+
+  const handlePlayAgain = () => {
+    handleRestartGame();
+    // Small delay then start again
+    setTimeout(() => {
+      handleStartGame();
+    }, 500);
   };
 
   // Waiting for room creation
@@ -138,8 +200,86 @@ function PreviewGame() {
     );
   }
 
+  // Results screen
+  if (showResults) {
+    return (
+      <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="h-full w-full flex flex-col items-center justify-center p-8">
+          <div className="text-6xl mb-4">🏆</div>
+          <h1 className={`text-4xl font-black mb-8 bg-gradient-to-r ${config.color} bg-clip-text text-transparent`}>
+            {config.name} Results
+          </h1>
+
+          {/* Results */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 mb-8 max-w-lg w-full">
+            {results.length > 0 ? (
+              <div className="space-y-3">
+                {results.map((result, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex justify-between items-center p-3 rounded-xl ${
+                      result.isCorrect ? 'bg-green-500/20' : 'bg-red-500/20'
+                    }`}
+                  >
+                    <span className="text-white font-bold">{result.playerName}</span>
+                    <div className="flex items-center gap-3">
+                      <span className={result.isCorrect ? 'text-green-400' : 'text-red-400'}>
+                        {result.isCorrect ? '✓ Correct' : '✗ Wrong'}
+                      </span>
+                      {result.placement && (
+                        <span className="bg-yellow-400 text-gray-900 px-2 py-1 rounded-lg font-bold text-sm">
+                          #{result.placement}
+                        </span>
+                      )}
+                      <span className="text-white/60">+{result.points} pts</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-white/60 text-center py-4">
+                No submissions received
+              </div>
+            )}
+          </div>
+
+          {/* Scores */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 mb-8 max-w-lg w-full">
+            <h3 className="text-white font-bold mb-3">Total Scores</h3>
+            <div className="space-y-2">
+              {players.map(player => (
+                <div key={player.id} className="flex justify-between text-white">
+                  <span>{player.name}</span>
+                  <span className="font-bold">{scores[player.id] || 0} pts</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-4">
+            <button
+              onClick={handlePlayAgain}
+              className={`px-8 py-3 rounded-xl font-bold text-lg bg-gradient-to-r ${config.color} text-white hover:scale-105 transition-all`}
+            >
+              Play Again
+            </button>
+            <button
+              onClick={handleRestartGame}
+              className="px-8 py-3 rounded-xl font-bold text-lg bg-gray-600 text-white hover:bg-gray-500 transition-all"
+            >
+              Back to Lobby
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Game is running
   if (gameStarted && currentChallenge) {
+    const isQuickGame = !['snake', 'connect4'].includes(currentChallenge.gameType);
+
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="h-full w-full flex flex-col p-4">
@@ -148,6 +288,16 @@ function PreviewGame() {
             <div className={`px-4 py-2 rounded-xl bg-gradient-to-r ${config.color} text-white font-bold`}>
               {config.emoji} {config.name} Preview
             </div>
+
+            {/* Timer for quick games */}
+            {isQuickGame && (
+              <div className={`px-6 py-2 rounded-xl font-black text-2xl ${
+                timeRemaining <= 10 ? 'bg-red-500 text-white animate-pulse' : 'bg-white/20 text-white'
+              }`}>
+                ⏱️ {timeRemaining}s
+              </div>
+            )}
+
             <div className="text-white/60 font-mono">
               Room: {roomCode}
             </div>
@@ -160,7 +310,8 @@ function PreviewGame() {
           </div>
 
           {/* Game Content */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center overflow-auto p-4">
+            {/* SNAKE */}
             {gameType === 'snake' && snakeGameState ? (
               <SnakeGameBoard
                 snakes={snakeGameState.snakes}
@@ -168,9 +319,125 @@ function PreviewGame() {
                 board={snakeGameState.board}
                 timeRemaining={snakeGameState.timeRemaining}
               />
+            ) : /* CONNECT 4 */
+            gameType === 'connect4' && connect4Board ? (
+              <div className="w-full max-w-4xl">
+                {/* Teams */}
+                <div className="flex justify-center gap-4 mb-4">
+                  <div className="bg-red-500 px-6 py-2 rounded-xl text-white font-bold">
+                    🔴 {connect4Teams?.red?.map(p => p.name).join(', ') || 'Red Team'}
+                  </div>
+                  <div className="bg-blue-500 px-6 py-2 rounded-xl text-white font-bold">
+                    🔵 {connect4Teams?.blue?.map(p => p.name).join(', ') || 'Blue Team'}
+                  </div>
+                </div>
+
+                {/* Current Turn / Winner */}
+                {connect4Winner ? (
+                  <div className={`text-center py-4 rounded-xl mb-4 ${connect4Winner === 'red' ? 'bg-red-500' : 'bg-blue-500'}`}>
+                    <span className="text-white text-3xl font-black">
+                      {connect4Winner === 'red' ? '🔴' : '🔵'} {connect4Winner.toUpperCase()} WINS!
+                    </span>
+                  </div>
+                ) : connect4CurrentPlayer ? (
+                  <div className={`text-center py-3 rounded-xl mb-4 ${connect4CurrentPlayer.team === 'red' ? 'bg-red-500' : 'bg-blue-500'}`}>
+                    <span className="text-white text-2xl font-bold">
+                      {connect4CurrentPlayer.team === 'red' ? '🔴' : '🔵'} {connect4CurrentPlayer.playerName}'s Turn
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* Board */}
+                <div className="flex justify-center">
+                  <div className="bg-blue-900 p-4 rounded-2xl">
+                    <div className="grid grid-cols-7 gap-2">
+                      {connect4Board.map((row, rowIdx) =>
+                        row.map((cell, colIdx) => (
+                          <div
+                            key={`${rowIdx}-${colIdx}`}
+                            className={`w-12 h-12 rounded-full border-2 ${
+                              cell === 'red' ? 'bg-red-500 border-red-700' :
+                              cell === 'blue' ? 'bg-blue-500 border-blue-700' :
+                              'bg-white border-gray-300'
+                            }`}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : /* SPEED MATH, TRUE/FALSE, TRIVIA */
+            currentChallenge?.questions?.length > 0 ? (
+              <div className="w-full max-w-4xl space-y-4">
+                {currentChallenge.questions.map((tierData, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20"
+                  >
+                    {/* Players for this tier */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {tierData.players?.map((player, pIdx) => (
+                        <span
+                          key={pIdx}
+                          className="bg-yellow-400 text-gray-900 font-bold px-3 py-1 rounded-full text-sm"
+                        >
+                          {player.name}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Question Display */}
+                    <div className="text-center">
+                      {/* Speed Math */}
+                      {gameType === 'speed-math' && (
+                        <div className="text-white text-4xl font-black">
+                          {tierData.question} = ?
+                        </div>
+                      )}
+
+                      {/* True/False */}
+                      {gameType === 'true-false' && (
+                        <div className="text-white text-2xl font-bold">
+                          {tierData.question}
+                        </div>
+                      )}
+
+                      {/* Trivia */}
+                      {gameType === 'trivia' && (
+                        <div>
+                          <div className="text-white text-xl font-bold mb-4">
+                            {tierData.question}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {tierData.options?.map((opt, i) => (
+                              <div
+                                key={i}
+                                className="bg-white/20 rounded-lg px-4 py-2 text-white font-semibold"
+                              >
+                                {String.fromCharCode(65 + i)}. {opt}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Spelling */}
+                      {gameType === 'spelling' && (
+                        <div className="text-white text-2xl font-bold">
+                          🎧 Listen for your word on the TV!
+                          <div className="text-lg text-white/60 mt-2">
+                            Hint: {tierData.hint}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="text-white text-2xl">
-                Game type "{gameType}" display not yet implemented in preview
+                Loading {config.name}...
               </div>
             )}
           </div>
