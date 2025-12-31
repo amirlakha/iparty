@@ -5,34 +5,26 @@
 Memory Match is a team-based card-flipping game where players work together to find matching pairs of Christmas-themed images. Players take turns flipping two cards at a time, trying to remember where images are located.
 
 **Game Type:** Long game (same category as connect4, snake)
-**Duration:** 2-3 minutes or until all pairs are found
+**Duration:** No time limit - game ends when all pairs are found (like Connect 4)
 
 ## Gameplay
 
 1. A grid of face-down cards is displayed on the coordinator screen
 2. Players take turns (round-robin) selecting two cards to flip
 3. If cards match, they stay face-up and the player scores points
-4. If cards don't match, they flip back face-down after a brief delay
-5. Game ends when all pairs are found or time runs out
-6. Team earns a star if they find at least 60% of pairs
+4. If cards don't match, they flip back face-down after 2 seconds
+5. Game ends when all pairs are found
+6. Team always earns a star (game always completes)
 
 ## Grid Configuration
 
-### By Number of Players
+**Fixed grid:** 6 columns × 5 rows = 30 cards = 15 pairs
 
-| Players | Grid Size | Total Cards | Pairs |
-|---------|-----------|-------------|-------|
-| 1-2     | 4x4       | 16          | 8     |
-| 3-4     | 4x5       | 20          | 10    |
-| 5+      | 5x6       | 30          | 15    |
+## Timing
 
-### Age-Adaptive Timing
-
-| Tier | Ages | Card Reveal Time | Turn Time Limit |
-|------|------|------------------|-----------------|
-| Young | ≤9 | 2.0 seconds | 15 seconds |
-| Middle | 10-12 | 1.5 seconds | 12 seconds |
-| Teen | ≥13 | 1.0 seconds | 10 seconds |
+**Fixed timing for all games:**
+- **Card reveal time:** 2 seconds (how long non-matching cards stay visible)
+- **Turn time limit:** 15 seconds (to select both cards)
 
 ## Card Images
 
@@ -63,26 +55,28 @@ const cardImages = [
 ### Coordinator Screen (TV)
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    MEMORY MATCH                         │
-│                                                         │
-│   Current Turn: Player 1 (Alex)         Time: 1:45     │
-│                                                         │
-│   ┌────┬────┬────┬────┬────┐                           │
-│   │ 🎄 │ ?? │ ?? │ ?? │ 🎄 │                           │
-│   ├────┼────┼────┼────┼────┤                           │
-│   │ ?? │ ?? │ 🎅 │ ?? │ ?? │                           │
-│   ├────┼────┼────┼────┼────┤                           │
-│   │ ?? │ ?? │ ?? │ ?? │ ?? │                           │
-│   ├────┼────┼────┼────┼────┤                           │
-│   │ ?? │ 🎅 │ ?? │ ?? │ ?? │                           │
-│   └────┴────┴────┴────┴────┘                           │
-│                                                         │
-│   Pairs Found: 2/10          Select a card!            │
-│                                                         │
-│   Scores:  Alex: 40  |  Sam: 20  |  Jo: 30             │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                       MEMORY MATCH                            │
+│                                                               │
+│   Current Turn: Player 1 (Alex)         Turn Time: 12s       │
+│                                                               │
+│   ┌────┬────┬────┬────┬────┬────┐                            │
+│   │ 🎄 │[??]│ ?? │ ?? │ 🎄 │ ?? │  ← [??] = cursor position  │
+│   ├────┼────┼────┼────┼────┼────┤                            │
+│   │ ?? │ ?? │ 🎅 │ ?? │ ?? │ ?? │                            │
+│   ├────┼────┼────┼────┼────┼────┤                            │
+│   │ ?? │ ?? │ ?? │ ?? │ ?? │ ?? │                            │
+│   ├────┼────┼────┼────┼────┼────┤                            │
+│   │ ?? │ 🎅 │ ?? │ ?? │ ?? │ ?? │                            │
+│   ├────┼────┼────┼────┼────┼────┤                            │
+│   │ ?? │ ?? │ ?? │ ?? │ ?? │ ?? │                            │
+│   └────┴────┴────┴────┴────┴────┘                            │
+│                                                               │
+│   Pairs Found: 2/15               Use arrows to move cursor  │
+│                                                               │
+│   Scores:  Alex: 40  |  Sam: 20  |  Jo: 30                   │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ### Player Screen (Phone) - Active Turn
@@ -90,21 +84,24 @@ const cardImages = [
 ```
 ┌─────────────────────────┐
 │                         │
-│      YOUR TURN!         │
+│       YOUR TURN!        │
 │                         │
-│   Select a card:        │
+│  Use arrows to move     │
+│  cursor on TV screen    │
 │                         │
-│  ┌───┬───┬───┬───┬───┐  │
-│  │ ✓ │ 1 │ 2 │ 3 │ ✓ │  │
-│  ├───┼───┼───┼───┼───┤  │
-│  │ 4 │ 5 │ 6 │ 7 │ 8 │  │
-│  ├───┼───┼───┼───┼───┤  │
-│  │ 9 │10 │11 │12 │13 │  │
-│  ├───┼───┼───┼───┼───┤  │
-│  │14 │ 6 │15 │16 │17 │  │
-│  └───┴───┴───┴───┴───┘  │
+│         ┌───┐           │
+│         │ ↑ │           │
+│     ┌───┼───┼───┐       │
+│     │ ← │   │ → │       │
+│     └───┼───┼───┘       │
+│         │ ↓ │           │
+│         └───┘           │
 │                         │
-│      Time: 8 seconds    │
+│    ┌─────────────┐      │
+│    │   SELECT    │      │
+│    └─────────────┘      │
+│                         │
+│    Turn Time: 12s       │
 │                         │
 └─────────────────────────┘
 ```
@@ -118,7 +115,7 @@ const cardImages = [
 │                         │
 │   Watch the TV screen   │
 │                         │
-│   Pairs found: 2/10     │
+│   Pairs found: 2/15     │
 │                         │
 │   Your score: 30 pts    │
 │                         │
@@ -127,24 +124,34 @@ const cardImages = [
 
 ## Turn Flow
 
-1. **Turn Start**: Server assigns current player, starts turn timer
-2. **First Card**: Player selects first card, it flips face-up on coordinator
-3. **Second Card**: Player selects second card, it flips face-up
-4. **Evaluation**:
-   - Match: Cards stay up, player scores, same player continues (optional) or next player
-   - No Match: Cards shown briefly, then flip back down
-5. **Next Turn**: Server assigns next player in rotation
+1. **Turn Start**: Server assigns current player, starts 15s turn timer, cursor appears at top-left
+2. **Navigation**: Player uses arrow buttons on phone to move cursor on TV
+3. **First Card**: Player presses SELECT, card flips face-up, cursor moves to next unflipped card
+4. **Second Card**: Player navigates and presses SELECT again, second card flips face-up
+5. **Evaluation**:
+   - Match: Cards stay up, player scores, next player's turn
+   - No Match: Cards shown for 2 seconds, then flip back down
+6. **Next Turn**: Server assigns next player in rotation, cursor resets
 
 ## Scoring
 
-### Individual Points
-- Finding a match: **20 points**
-- Bonus for consecutive matches: **+10 points** per streak
+### Mini-Game Points (used to determine placement)
+- Finding a match: **10 points**
 - Turn timeout (no selection): **0 points**, turn passes
 
+### Game Points (awarded at end based on placement)
+| Placement | Points |
+|-----------|--------|
+| 1st | 30 |
+| 2nd | 20 |
+| 3rd+ | 10 |
+
+**Ties:** Players with equal mini-game points share placement (Olympic-style). Both get the same game points, next placement is skipped.
+
+Example: A=50, B=50, C=30, D=20 → A & B tie 1st (30 pts each), C=3rd (10 pts), D=4th (10 pts)
+
 ### Team Star
-- Star awarded if team finds **≥60% of pairs** before time runs out
-- Example: 10 pairs → need 6+ matches for star
+- Star **always awarded** (game always completes, same as Connect 4)
 
 ## Technical Implementation
 
@@ -175,27 +182,29 @@ client/src/pages/PreviewGame.jsx    # Add memory-match preview
     { id: 1, imageId: 'tree', flipped: false, matched: false },
     // ... all cards
   ],
-  gridSize: { rows: 4, cols: 5 },
+  gridSize: { rows: 5, cols: 6 },  // Fixed: 6x5 grid
+  cursorPosition: { row: 0, col: 0 },  // Current cursor location
   currentPlayer: 'player-socket-id',
   currentPlayerName: 'Alex',
   turnOrder: ['player1-id', 'player2-id', 'player3-id'],
   turnIndex: 0,
-  selectedCards: [],           // 0, 1, or 2 cards currently selected
+  selectedCards: [],           // 0, 1, or 2 cards currently flipped this turn
   pairsFound: 2,
-  totalPairs: 10,
-  revealTime: 1500,            // ms to show non-matching cards
-  turnTimeLimit: 12000,        // ms per turn
-  scores: { 'player1-id': 40, 'player2-id': 20 },
-  streak: 0                    // consecutive matches by current player
+  totalPairs: 15,              // Fixed: 15 pairs
+  revealTime: 2000,            // Fixed: 2 seconds
+  turnTimeLimit: 15000,        // Fixed: 15 seconds
+  scores: { 'player1-id': 40, 'player2-id': 20 }  // Mini-game points (10 per match)
 }
 ```
 
 ### Socket Events
 
 **New Events:**
-- `memory-match-state` - Server sends full board state to coordinator
-- `memory-match-player-state` - Server sends player-specific view
-- `memory-match-select` - Player selects a card
+- `memory-match-state` - Server sends full board state to coordinator (includes cursor position)
+- `memory-match-player-state` - Server sends player-specific view (is it your turn?)
+- `memory-match-move` - Player sends arrow direction (up/down/left/right)
+- `memory-match-select` - Player presses SELECT to flip card at cursor
+- `memory-match-cursor-update` - Server broadcasts new cursor position to coordinator
 - `memory-match-flip` - Server broadcasts card flip
 - `memory-match-result` - Server broadcasts match/no-match result
 - `memory-match-turn-change` - Server announces next player's turn
@@ -231,49 +240,86 @@ function checkMatch(card1, card2) {
 ## Game Flow Sequence
 
 ```
-1. Server generates board, assigns turn order
-2. Server emits 'memory-match-state' to coordinator
-3. Server emits 'memory-match-player-state' to current player (with selectable cards)
-4. Player selects card 1 → 'memory-match-select'
-5. Server flips card 1 → 'memory-match-flip'
-6. Player selects card 2 → 'memory-match-select'
-7. Server flips card 2 → 'memory-match-flip'
-8. Server evaluates match → 'memory-match-result'
-   - Match: Update scores, cards stay flipped
-   - No match: Wait revealTime, flip cards back
-9. Server advances turn → 'memory-match-turn-change'
-10. Repeat until all pairs found or time expires
-11. Server emits 'memory-match-complete' with final scores
+1. Server generates board, assigns turn order, cursor starts at (0,0)
+2. Server emits 'memory-match-state' to coordinator (board + cursor)
+3. Server emits 'memory-match-player-state' to current player (your turn!)
+4. Player moves cursor → 'memory-match-move' (direction)
+5. Server updates cursor → 'memory-match-cursor-update'
+6. Player presses SELECT → 'memory-match-select'
+7. Server flips card 1 → 'memory-match-flip'
+8. Player moves cursor and presses SELECT again
+9. Server flips card 2 → 'memory-match-flip'
+10. Server evaluates match → 'memory-match-result'
+    - Match: Update scores, cards stay flipped
+    - No match: Wait 2 seconds, flip cards back
+11. Server advances turn → 'memory-match-turn-change', cursor resets
+12. Repeat until all pairs found
+13. Server emits 'memory-match-complete' with final scores, star awarded
 ```
 
 ## Edge Cases
 
 1. **Player disconnects during turn**: Skip to next player, rejoin gets their turn in rotation
-2. **Turn timeout**: Flip back any revealed card, move to next player
-3. **Last pair**: Game ends immediately, show celebration
-4. **Time runs out**: Game ends, calculate star based on pairs found
-5. **Single player**: No turn rotation, continuous play
+2. **Turn timeout (15s)**: Flip back any revealed card, move to next player
+3. **Last pair found**: Game ends immediately, team earns star, show celebration
+4. **Single player**: No turn rotation, continuous play
 
 ## Testing Checklist
 
-- [ ] Board generates with correct number of pairs
+- [ ] Board generates with 15 pairs (6x5 grid)
 - [ ] Cards shuffle properly (pairs not adjacent)
 - [ ] Turn rotation works correctly
-- [ ] Card flipping displays on coordinator screen
+- [ ] Arrow keys move cursor on TV screen
+- [ ] SELECT button flips card at cursor position
+- [ ] Card flip animation works (0.5s 3D rotate)
 - [ ] Match detection works
-- [ ] Non-matching cards flip back after delay
-- [ ] Scores update correctly
-- [ ] Streak bonus applies
-- [ ] Turn timer works
-- [ ] Game ends when all pairs found
-- [ ] Game ends when time expires
-- [ ] Star awarded based on pairs found
+- [ ] Non-matching cards flip back after 2 seconds + 0.5s animation
+- [ ] Player earns 10 mini-game points when finding a pair
+- [ ] Placement-based game points awarded at end (30/20/10)
+- [ ] Ties handled correctly (Olympic-style, shared placement)
+- [ ] Turn timer (15 seconds) works - skips to next player on timeout
+- [ ] Game ends when all 15 pairs found (star always awarded)
 - [ ] Works in preview mode
 - [ ] Multiple players can play simultaneously
 
+## Card Flip Animation
+
+Cards use CSS 3D transforms for a realistic flip effect:
+
+```css
+.card {
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease-in-out;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+
+.card-front {
+  /* Back of card - showing ?? or decorative pattern */
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  /* Front of card - showing emoji */
+}
+```
+
+**Animation timing:**
+- Flip duration: 0.5 seconds
+- Server waits for flip animation before evaluating match
+- Non-matching cards wait 2 seconds (visible) + 0.5 seconds (flip back)
+
 ## Future Enhancements (Out of Scope)
 
-- Flip animation effects
 - Sound effects for match/no-match
 - Power-ups (peek at a card, extra time)
 - Difficulty modes (fewer/more pairs)
