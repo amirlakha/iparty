@@ -40,6 +40,9 @@ function CoordinatorScreen() {
   // Snake game state
   const [snakeGameState, setSnakeGameState] = useState(null);
 
+  // Memory Match game state
+  const [memoryMatchState, setMemoryMatchState] = useState(null);
+
   // Word Scramble hint delay (show after 30 seconds)
   const [showWordScrambleHint, setShowWordScrambleHint] = useState(false);
 
@@ -130,6 +133,47 @@ function CoordinatorScreen() {
       }
     });
 
+    // Memory Match game events
+    socket.on('memory-match-state', (data) => {
+      console.log('[Memory Match] State update:', data);
+      setMemoryMatchState(data);
+    });
+
+    socket.on('memory-match-cursor-update', (data) => {
+      setMemoryMatchState(prev => prev ? { ...prev, cursorPosition: data.cursorPosition } : null);
+    });
+
+    socket.on('memory-match-flip', (data) => {
+      setMemoryMatchState(prev => {
+        if (!prev) return null;
+        const newBoard = [...prev.board];
+        newBoard[data.cardIndex] = { ...newBoard[data.cardIndex], flipped: true };
+        return { ...prev, board: newBoard };
+      });
+    });
+
+    socket.on('memory-match-result', (data) => {
+      console.log('[Memory Match] Result:', data);
+      // Result handled - state update will come from server
+    });
+
+    socket.on('memory-match-turn-change', (data) => {
+      console.log('[Memory Match] Turn change:', data);
+      setMemoryMatchState(prev => prev ? {
+        ...prev,
+        currentPlayer: data.currentPlayer,
+        currentPlayerName: data.currentPlayerName,
+        cursorPosition: data.cursorPosition
+      } : null);
+    });
+
+    socket.on('memory-match-complete', (data) => {
+      console.log('[Memory Match] Game complete:', data);
+      if (data.finalScores) {
+        setScores(data.finalScores);
+      }
+    });
+
     return () => {
       socket.off('game-state-update');
       socket.off('player-joined');
@@ -143,6 +187,12 @@ function CoordinatorScreen() {
       socket.off('snake-game-start');
       socket.off('snake-game-tick');
       socket.off('snake-game-end');
+      socket.off('memory-match-state');
+      socket.off('memory-match-cursor-update');
+      socket.off('memory-match-flip');
+      socket.off('memory-match-result');
+      socket.off('memory-match-turn-change');
+      socket.off('memory-match-complete');
     };
   }, [socket, roomCode]);
 
@@ -825,6 +875,98 @@ function CoordinatorScreen() {
                           board={snakeGameState.board}
                           timeRemaining={snakeGameState.timeRemaining}
                         />
+                      ) : currentChallenge.gameType === 'memory-match' && memoryMatchState ? (
+                        /* MEMORY MATCH GAME */
+                        <div className="flex flex-col items-center gap-4">
+                          {/* Header with current player and pairs found */}
+                          <div className="flex justify-between items-center w-full max-w-4xl px-4">
+                            <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl px-6 py-3 text-white">
+                              <div className="text-sm font-medium opacity-80">Current Turn</div>
+                              <div className="text-xl font-bold">{memoryMatchState.currentPlayerName}</div>
+                            </div>
+                            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl px-6 py-3 text-white text-center">
+                              <div className="text-sm font-medium opacity-80">Pairs Found</div>
+                              <div className="text-xl font-bold">{memoryMatchState.pairsFound} / {memoryMatchState.totalPairs}</div>
+                            </div>
+                          </div>
+
+                          {/* Memory Match Grid */}
+                          <div
+                            className="grid gap-2 p-4 bg-gradient-to-br from-blue-900/80 to-purple-900/80 rounded-2xl"
+                            style={{
+                              gridTemplateColumns: `repeat(${memoryMatchState.gridSize.cols}, 1fr)`,
+                            }}
+                          >
+                            {memoryMatchState.board.map((card, index) => {
+                              const row = Math.floor(index / memoryMatchState.gridSize.cols);
+                              const col = index % memoryMatchState.gridSize.cols;
+                              const isCursor = memoryMatchState.cursorPosition.row === row &&
+                                             memoryMatchState.cursorPosition.col === col;
+
+                              return (
+                                <div
+                                  key={card.id}
+                                  className={`relative rounded-lg transition-all duration-300 ${
+                                    isCursor ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-blue-900 scale-105' : ''
+                                  }`}
+                                  style={{
+                                    width: 'clamp(3rem, 8vw, 5rem)',
+                                    height: 'clamp(4rem, 10vw, 6rem)',
+                                    perspective: '1000px',
+                                  }}
+                                >
+                                  <div
+                                    className={`absolute inset-0 transition-transform duration-500 ${
+                                      card.flipped || card.matched ? '' : ''
+                                    }`}
+                                    style={{
+                                      transformStyle: 'preserve-3d',
+                                      transform: card.flipped || card.matched ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                                    }}
+                                  >
+                                    {/* Card Back (face down) */}
+                                    <div
+                                      className={`absolute inset-0 rounded-lg flex items-center justify-center font-bold text-2xl ${
+                                        card.matched ? 'bg-green-500/50' : 'bg-gradient-to-br from-red-500 to-red-700'
+                                      } border-2 border-white/30`}
+                                      style={{ backfaceVisibility: 'hidden' }}
+                                    >
+                                      {card.matched ? '✓' : '?'}
+                                    </div>
+                                    {/* Card Front (face up) */}
+                                    <div
+                                      className={`absolute inset-0 rounded-lg flex items-center justify-center ${
+                                        card.matched ? 'bg-green-500' : 'bg-white'
+                                      } border-2 border-white/50`}
+                                      style={{
+                                        backfaceVisibility: 'hidden',
+                                        transform: 'rotateY(180deg)',
+                                      }}
+                                    >
+                                      <span style={{ fontSize: 'clamp(1.5rem, 4vw, 3rem)' }}>{card.emoji}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Scores */}
+                          <div className="flex flex-wrap justify-center gap-3 mt-2">
+                            {Object.entries(memoryMatchState.scores).map(([playerId, score]) => (
+                              <div
+                                key={playerId}
+                                className={`px-4 py-2 rounded-lg text-white font-bold ${
+                                  memoryMatchState.currentPlayer === playerId
+                                    ? 'bg-yellow-500 ring-2 ring-yellow-300'
+                                    : 'bg-gray-600/80'
+                                }`}
+                              >
+                                {memoryMatchState.playerNames[playerId]}: {score} pts
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       ) : currentChallenge.questions && currentChallenge.questions.length > 0 ? (
                         <>
                           {/* SPELLING BEE: Single unified panel (not per-tier) */}

@@ -8,6 +8,7 @@
   },
   "longGames": {
     "connect4": true,
-    "snake": true
+    "snake": true,
+    "memory-match": true
   }
 }

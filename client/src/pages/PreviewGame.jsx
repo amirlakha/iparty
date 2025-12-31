@@ -7,6 +7,7 @@ import SnakeGameBoard from '../components/SnakeGameBoard';
 const GAME_TYPE_CONFIG = {
   snake: { name: 'Snake Arena', emoji: '🐍', color: 'from-green-500 to-emerald-600' },
   'connect4': { name: 'Connect 4', emoji: '🔴', color: 'from-red-500 to-blue-600' },
+  'memory-match': { name: 'Memory Match', emoji: '🃏', color: 'from-purple-500 to-pink-600' },
   trivia: { name: 'Christmas Trivia', emoji: '🎯', color: 'from-purple-500 to-pink-600' },
   'true-false': { name: 'True or False', emoji: '✅', color: 'from-green-500 to-teal-600' },
   'speed-math': { name: 'Speed Math', emoji: '🧮', color: 'from-blue-500 to-indigo-600' },
@@ -31,6 +32,9 @@ function PreviewGame() {
   const [connect4CurrentPlayer, setConnect4CurrentPlayer] = useState(null);
   const [connect4Winner, setConnect4Winner] = useState(null);
   const [connect4Teams, setConnect4Teams] = useState(null);
+
+  // Memory Match-specific state
+  const [memoryMatchState, setMemoryMatchState] = useState(null);
 
   // Timer and results state
   const [timeRemaining, setTimeRemaining] = useState(60);
@@ -91,6 +95,22 @@ function PreviewGame() {
         setConnect4Teams(data.challenge.teams);
         setConnect4Winner(null);
       }
+
+      // For memory-match, initialize from challenge data
+      if (data.challenge.gameType === 'memory-match') {
+        console.log('[Preview] Initializing memory-match state from challenge');
+        setMemoryMatchState({
+          board: data.challenge.board,
+          gridSize: data.challenge.gridSize,
+          cursorPosition: data.challenge.cursorPosition,
+          currentPlayer: data.challenge.currentPlayer,
+          currentPlayerName: data.challenge.currentPlayerName,
+          pairsFound: data.challenge.pairsFound,
+          totalPairs: data.challenge.totalPairs,
+          scores: data.challenge.scores,
+          playerNames: data.challenge.playerNames,
+        });
+      }
     });
 
     // Snake events
@@ -121,6 +141,43 @@ function PreviewGame() {
       setConnect4Teams(data.teams);
     });
 
+    // Memory Match events
+    socket.on('memory-match-state', (data) => {
+      console.log('[Preview] Memory Match state update:', data);
+      setMemoryMatchState(data);
+    });
+
+    socket.on('memory-match-cursor-update', (data) => {
+      setMemoryMatchState(prev => prev ? { ...prev, cursorPosition: data.cursorPosition } : null);
+    });
+
+    socket.on('memory-match-flip', (data) => {
+      setMemoryMatchState(prev => {
+        if (!prev) return null;
+        const newBoard = [...prev.board];
+        newBoard[data.cardIndex] = { ...newBoard[data.cardIndex], flipped: true };
+        return { ...prev, board: newBoard };
+      });
+    });
+
+    socket.on('memory-match-turn-change', (data) => {
+      setMemoryMatchState(prev => prev ? {
+        ...prev,
+        currentPlayer: data.currentPlayer,
+        currentPlayerName: data.currentPlayerName,
+        cursorPosition: data.cursorPosition
+      } : null);
+    });
+
+    socket.on('memory-match-complete', (data) => {
+      console.log('[Preview] Memory Match game ended:', data.placements);
+      setTimeout(() => {
+        setGameStarted(false);
+        setMemoryMatchState(null);
+        setCurrentChallenge(null);
+      }, 5000);
+    });
+
     // Results events
     socket.on('challenge-results', (data) => {
       console.log('[Preview] Challenge results:', data);
@@ -143,6 +200,11 @@ function PreviewGame() {
       socket.off('snake-game-tick');
       socket.off('snake-game-end');
       socket.off('connect4-update');
+      socket.off('memory-match-state');
+      socket.off('memory-match-cursor-update');
+      socket.off('memory-match-flip');
+      socket.off('memory-match-turn-change');
+      socket.off('memory-match-complete');
       socket.off('challenge-results');
       socket.off('preview-game-ended');
     };
@@ -383,6 +445,96 @@ function PreviewGame() {
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+            ) : /* MEMORY MATCH */
+            gameType === 'memory-match' && memoryMatchState ? (
+              <div className="flex flex-col items-center gap-4">
+                {/* Header with current player and pairs found */}
+                <div className="flex justify-between items-center w-full max-w-4xl px-4">
+                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl px-6 py-3 text-white">
+                    <div className="text-sm font-medium opacity-80">Current Turn</div>
+                    <div className="text-xl font-bold">{memoryMatchState.currentPlayerName}</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl px-6 py-3 text-white text-center">
+                    <div className="text-sm font-medium opacity-80">Pairs Found</div>
+                    <div className="text-xl font-bold">{memoryMatchState.pairsFound} / {memoryMatchState.totalPairs}</div>
+                  </div>
+                </div>
+
+                {/* Memory Match Grid */}
+                <div
+                  className="grid gap-2 p-4 bg-gradient-to-br from-blue-900/80 to-purple-900/80 rounded-2xl"
+                  style={{
+                    gridTemplateColumns: `repeat(${memoryMatchState.gridSize.cols}, 1fr)`,
+                  }}
+                >
+                  {memoryMatchState.board.map((card, index) => {
+                    const row = Math.floor(index / memoryMatchState.gridSize.cols);
+                    const col = index % memoryMatchState.gridSize.cols;
+                    const isCursor = memoryMatchState.cursorPosition?.row === row &&
+                                   memoryMatchState.cursorPosition?.col === col;
+
+                    return (
+                      <div
+                        key={card.id}
+                        className={`relative rounded-lg transition-all duration-300 ${
+                          isCursor ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-blue-900 scale-105' : ''
+                        }`}
+                        style={{
+                          width: 'clamp(3rem, 8vw, 5rem)',
+                          height: 'clamp(4rem, 10vw, 6rem)',
+                          perspective: '1000px',
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 transition-transform duration-500"
+                          style={{
+                            transformStyle: 'preserve-3d',
+                            transform: card.flipped || card.matched ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                          }}
+                        >
+                          {/* Card Back (face down) */}
+                          <div
+                            className={`absolute inset-0 rounded-lg flex items-center justify-center font-bold text-2xl ${
+                              card.matched ? 'bg-green-500/50' : 'bg-gradient-to-br from-red-500 to-red-700'
+                            } border-2 border-white/30`}
+                            style={{ backfaceVisibility: 'hidden' }}
+                          >
+                            {card.matched ? '✓' : '?'}
+                          </div>
+                          {/* Card Front (face up) */}
+                          <div
+                            className={`absolute inset-0 rounded-lg flex items-center justify-center ${
+                              card.matched ? 'bg-green-500' : 'bg-white'
+                            } border-2 border-white/50`}
+                            style={{
+                              backfaceVisibility: 'hidden',
+                              transform: 'rotateY(180deg)',
+                            }}
+                          >
+                            <span style={{ fontSize: 'clamp(1.5rem, 4vw, 3rem)' }}>{card.emoji}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Scores */}
+                <div className="flex flex-wrap justify-center gap-3 mt-2">
+                  {Object.entries(memoryMatchState.scores || {}).map(([playerId, score]) => (
+                    <div
+                      key={playerId}
+                      className={`px-4 py-2 rounded-lg text-white font-bold ${
+                        memoryMatchState.currentPlayer === playerId
+                          ? 'bg-yellow-500 ring-2 ring-yellow-300'
+                          : 'bg-gray-600/80'
+                      }`}
+                    >
+                      {memoryMatchState.playerNames?.[playerId] || playerId}: {score} pts
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : /* SPEED MATH, TRUE/FALSE, TRIVIA, WORD SCRAMBLE */

@@ -22,6 +22,10 @@ const {
   TICK_RATE: SNAKE_TICK_RATE,
 } = require('./snakeLogic');
 
+const {
+  initializeGame: initializeMemoryMatchGame,
+} = require('./memoryMatchLogic');
+
 const { wordScrambleWords, getRandomQuestion } = require('../data/questionPools');
 
 const gameConfig = require('../config/gameConfig.json');
@@ -113,7 +117,7 @@ console.log(`[Config] Enabled games: ${enabledGames.join(', ')}`);
  * - Long games (5th in each section): connect4, snake
  */
 const QUICK_GAMES = ['speed-math', 'true-false', 'trivia', 'spelling', 'word-scramble'];
-const BIG_GAMES = ['connect4', 'snake'];
+const BIG_GAMES = ['connect4', 'snake', 'memory-match'];
 const GAME_TYPES = [...QUICK_GAMES, ...BIG_GAMES];
 
 /**
@@ -276,6 +280,20 @@ function generateChallenge(round, section, players, gameType = null) {
         snakes: snakeGameState.snakes,
         food: snakeGameState.food,
         config: snakeGameState.config,
+        answerType: 'interactive',
+        validationOptions: {}
+      };
+    }
+
+    case 'memory-match': {
+      const memoryMatchState = initializeMemoryMatchGame(players);
+
+      return {
+        ...baseChallenge,
+        type: 'memory-match',
+        gameType: 'memory-match',
+        timeLimit: 0, // No time limit - game ends when all pairs found
+        ...memoryMatchState,
         answerType: 'interactive',
         validationOptions: {}
       };

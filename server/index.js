@@ -24,6 +24,20 @@ const {
   TICK_RATE: SNAKE_TICK_RATE,
 } = require('./utils/snakeLogic');
 
+const {
+  moveCursor: memoryMatchMoveCursor,
+  selectCard: memoryMatchSelectCard,
+  processMatchResult: memoryMatchProcessResult,
+  flipCardsBack: memoryMatchFlipCardsBack,
+  advanceTurn: memoryMatchAdvanceTurn,
+  calculatePlacements: calculateMemoryMatchPlacements,
+  getStateForCoordinator: getMemoryMatchStateForCoordinator,
+  getStateForPlayer: getMemoryMatchStateForPlayer,
+  REVEAL_TIME: MEMORY_MATCH_REVEAL_TIME,
+  TURN_TIME_LIMIT: MEMORY_MATCH_TURN_TIME_LIMIT,
+  FLIP_ANIMATION_TIME: MEMORY_MATCH_FLIP_ANIMATION_TIME,
+} = require('./utils/memoryMatchLogic');
+
 // ============================================================
 // DEVELOPMENT FLAG - Set game type for testing via environment variable
 // ============================================================
@@ -59,6 +73,10 @@ const connect4Timers = new Map();
 // Snake game state and tick timers
 const snakeGameStates = new Map();
 const snakeTickTimers = new Map();
+
+// Memory Match game state and turn timers
+const memoryMatchGameStates = new Map();
+const memoryMatchTurnTimers = new Map();
 
 // Schedule auto-move if player doesn't respond in time
 function scheduleConnect4TurnTimeout(roomCode, io, turnTimeLimit) {
@@ -122,9 +140,13 @@ function handleConnect4Move(roomCode, io, playerId, col, isAutoMove = false) {
 
     // Award points to winning team
     const winningTeam = challenge.teams[winResult.winner];
+    const sectionId = flowCoordinators.get(roomCode)?.currentSection || 1;
     winningTeam.forEach(player => {
       if (!game.scores[player.id]) game.scores[player.id] = 0;
       game.scores[player.id] += 30;
+      // Track section points (for potential rollback)
+      if (!game.sectionPoints[player.id]) game.sectionPoints[player.id] = {};
+      game.sectionPoints[player.id][sectionId] = (game.sectionPoints[player.id][sectionId] || 0) + 30;
       console.log(`  ${player.name}: +30 points (total: ${game.scores[player.id]})`);
     });
 
@@ -158,9 +180,13 @@ function handleConnect4Move(roomCode, io, playerId, col, isAutoMove = false) {
     console.log(`[${roomCode}] DRAW - Board full with no winner`);
 
     // Award draw points to all players
+    const drawSectionId = flowCoordinators.get(roomCode)?.currentSection || 1;
     game.players.forEach(player => {
       if (!game.scores[player.id]) game.scores[player.id] = 0;
       game.scores[player.id] += 10;
+      // Track section points (for potential rollback)
+      if (!game.sectionPoints[player.id]) game.sectionPoints[player.id] = {};
+      game.sectionPoints[player.id][drawSectionId] = (game.sectionPoints[player.id][drawSectionId] || 0) + 10;
       console.log(`  ${player.name}: +10 points (draw) (total: ${game.scores[player.id]})`);
     });
 
@@ -342,10 +368,14 @@ function endSnakeGame(roomCode, io) {
 
   // Calculate placements and award points
   const placements = calculateSnakePlacements(snakeState);
+  const snakeSectionId = flowCoordinator.currentSection;
 
   placements.forEach(result => {
     if (!game.scores[result.playerId]) game.scores[result.playerId] = 0;
     game.scores[result.playerId] += result.awardedPoints;
+    // Track section points (for potential rollback)
+    if (!game.sectionPoints[result.playerId]) game.sectionPoints[result.playerId] = {};
+    game.sectionPoints[result.playerId][snakeSectionId] = (game.sectionPoints[result.playerId][snakeSectionId] || 0) + result.awardedPoints;
     console.log(`  ${result.name}: ${result.score} snake pts → +${result.awardedPoints} game pts (${getPlacementLabel(result.placement)})`);
   });
 
@@ -390,6 +420,268 @@ function getPlacementLabel(placement) {
   if (placement === 2) return '2nd';
   if (placement === 3) return '3rd';
   return `${placement}th`;
+}
+
+// ============================================================
+// MEMORY MATCH GAME HANDLERS
+// ============================================================
+
+// Start memory match game
+function startMemoryMatchGame(roomCode, io, challenge) {
+  const game = games.get(roomCode);
+  if (!game) return;
+
+  // Store game state (challenge already has the initialized state)
+  const memoryMatchState = {
+    ...challenge,
+    turnStartTime: Date.now(),
+  };
+  memoryMatchGameStates.set(roomCode, memoryMatchState);
+
+  console.log(`[${roomCode}] Memory Match started with ${memoryMatchState.turnOrder.length} players`);
+  console.log(`  First player: ${memoryMatchState.currentPlayerName}`);
+
+  // Broadcast initial state to coordinator
+  io.to(game.coordinator).emit('memory-match-state', getMemoryMatchStateForCoordinator(memoryMatchState));
+
+  // Send player-specific state to each player
+  memoryMatchState.turnOrder.forEach(playerId => {
+    io.to(playerId).emit('memory-match-player-state', getMemoryMatchStateForPlayer(memoryMatchState, playerId));
+  });
+
+  // Start turn timer
+  scheduleMemoryMatchTurnTimeout(roomCode, io);
+}
+
+// Schedule turn timeout for memory match
+function scheduleMemoryMatchTurnTimeout(roomCode, io) {
+  // Clear existing timer
+  if (memoryMatchTurnTimers.has(roomCode)) {
+    clearTimeout(memoryMatchTurnTimers.get(roomCode));
+  }
+
+  const timer = setTimeout(() => {
+    handleMemoryMatchTurnTimeout(roomCode, io);
+  }, MEMORY_MATCH_TURN_TIME_LIMIT);
+
+  memoryMatchTurnTimers.set(roomCode, timer);
+}
+
+// Handle turn timeout
+function handleMemoryMatchTurnTimeout(roomCode, io) {
+  const memoryMatchState = memoryMatchGameStates.get(roomCode);
+  const game = games.get(roomCode);
+  if (!memoryMatchState || !game || memoryMatchState.gameOver) return;
+
+  console.log(`[${roomCode}] Memory Match turn timeout for ${memoryMatchState.currentPlayerName}`);
+
+  // Flip back any revealed cards
+  memoryMatchFlipCardsBack(memoryMatchState);
+
+  // Advance to next player
+  const turnInfo = memoryMatchAdvanceTurn(memoryMatchState);
+
+  // Broadcast turn change
+  io.to(game.coordinator).emit('memory-match-turn-change', turnInfo);
+  io.to(game.coordinator).emit('memory-match-state', getMemoryMatchStateForCoordinator(memoryMatchState));
+
+  // Update all players
+  memoryMatchState.turnOrder.forEach(playerId => {
+    io.to(playerId).emit('memory-match-player-state', getMemoryMatchStateForPlayer(memoryMatchState, playerId));
+  });
+
+  // Start new turn timer
+  scheduleMemoryMatchTurnTimeout(roomCode, io);
+}
+
+// Handle cursor move
+function handleMemoryMatchMove(roomCode, io, playerId, direction) {
+  const memoryMatchState = memoryMatchGameStates.get(roomCode);
+  const game = games.get(roomCode);
+  if (!memoryMatchState || !game || memoryMatchState.gameOver) return;
+
+  // Validate it's this player's turn
+  if (memoryMatchState.currentPlayer !== playerId) return;
+
+  // Move cursor
+  const newPosition = memoryMatchMoveCursor(memoryMatchState, direction);
+
+  // Broadcast cursor update to coordinator
+  io.to(game.coordinator).emit('memory-match-cursor-update', {
+    cursorPosition: newPosition,
+  });
+}
+
+// Handle card selection
+function handleMemoryMatchSelect(roomCode, io, playerId) {
+  const memoryMatchState = memoryMatchGameStates.get(roomCode);
+  const game = games.get(roomCode);
+  if (!memoryMatchState || !game || memoryMatchState.gameOver) return;
+
+  // Validate it's this player's turn
+  if (memoryMatchState.currentPlayer !== playerId) return;
+
+  // Try to select card at cursor
+  const selectResult = memoryMatchSelectCard(memoryMatchState);
+
+  if (!selectResult.success) {
+    console.log(`[${roomCode}] Invalid selection: ${selectResult.reason}`);
+    return;
+  }
+
+  // Broadcast card flip to coordinator
+  io.to(game.coordinator).emit('memory-match-flip', {
+    cardIndex: selectResult.cardIndex,
+    card: selectResult.card,
+  });
+
+  // If this is the second card, process the match
+  if (selectResult.isSecondCard) {
+    // Cancel turn timer since player made a selection
+    if (memoryMatchTurnTimers.has(roomCode)) {
+      clearTimeout(memoryMatchTurnTimers.get(roomCode));
+      memoryMatchTurnTimers.delete(roomCode);
+    }
+
+    // Wait for flip animation before processing
+    setTimeout(() => {
+      processMemoryMatchResult(roomCode, io, selectResult.isMatch, selectResult.card1Index, selectResult.card2Index);
+    }, MEMORY_MATCH_FLIP_ANIMATION_TIME);
+  }
+}
+
+// Process match result after second card is selected
+function processMemoryMatchResult(roomCode, io, isMatch, card1Index, card2Index) {
+  const memoryMatchState = memoryMatchGameStates.get(roomCode);
+  const game = games.get(roomCode);
+  if (!memoryMatchState || !game) return;
+
+  const result = memoryMatchProcessResult(memoryMatchState, isMatch, card1Index, card2Index);
+
+  // Safety check for race condition
+  if (result.error) {
+    console.log(`[${roomCode}] Memory Match result error: ${result.error}`);
+    return;
+  }
+
+  // Broadcast result
+  io.to(game.coordinator).emit('memory-match-result', result);
+
+  if (result.gameOver) {
+    // Game complete - end after showing result
+    setTimeout(() => {
+      endMemoryMatchGame(roomCode, io);
+    }, 1500);
+    return;
+  }
+
+  if (result.matched) {
+    // Match found - advance turn after brief celebration
+    setTimeout(() => {
+      advanceMemoryMatchTurn(roomCode, io);
+    }, 1000);
+  } else {
+    // No match - wait for reveal time, then flip back and advance
+    // Capture card indices for the timeout callback
+    const cardsToFlip = [card1Index, card2Index];
+    setTimeout(() => {
+      const currentState = memoryMatchGameStates.get(roomCode);
+      const currentGame = games.get(roomCode);
+      if (!currentState || !currentGame) return;
+
+      memoryMatchFlipCardsBack(currentState, cardsToFlip);
+      io.to(currentGame.coordinator).emit('memory-match-state', getMemoryMatchStateForCoordinator(currentState));
+      advanceMemoryMatchTurn(roomCode, io);
+    }, MEMORY_MATCH_REVEAL_TIME);
+  }
+}
+
+// Advance to next player's turn
+function advanceMemoryMatchTurn(roomCode, io) {
+  const memoryMatchState = memoryMatchGameStates.get(roomCode);
+  const game = games.get(roomCode);
+  if (!memoryMatchState || !game || memoryMatchState.gameOver) return;
+
+  const turnInfo = memoryMatchAdvanceTurn(memoryMatchState);
+
+  // Broadcast turn change
+  io.to(game.coordinator).emit('memory-match-turn-change', turnInfo);
+  io.to(game.coordinator).emit('memory-match-state', getMemoryMatchStateForCoordinator(memoryMatchState));
+
+  // Update all players
+  memoryMatchState.turnOrder.forEach(playerId => {
+    io.to(playerId).emit('memory-match-player-state', getMemoryMatchStateForPlayer(memoryMatchState, playerId));
+  });
+
+  // Start new turn timer
+  scheduleMemoryMatchTurnTimeout(roomCode, io);
+}
+
+// End memory match game and calculate scores
+function endMemoryMatchGame(roomCode, io) {
+  const memoryMatchState = memoryMatchGameStates.get(roomCode);
+  const game = games.get(roomCode);
+  const flowCoordinator = flowCoordinators.get(roomCode);
+
+  if (!memoryMatchState || !game || !flowCoordinator) return;
+  if (memoryMatchState.gameOver && memoryMatchState.ended) return; // Already ended
+  memoryMatchState.ended = true;
+
+  // Clear turn timer
+  if (memoryMatchTurnTimers.has(roomCode)) {
+    clearTimeout(memoryMatchTurnTimers.get(roomCode));
+    memoryMatchTurnTimers.delete(roomCode);
+  }
+
+  console.log(`[${roomCode}] Memory Match ended - calculating scores`);
+
+  // Calculate placements and award points
+  const placements = calculateMemoryMatchPlacements(memoryMatchState);
+  const memorySectionId = flowCoordinator.currentSection;
+
+  placements.forEach(result => {
+    if (!game.scores[result.playerId]) game.scores[result.playerId] = 0;
+    game.scores[result.playerId] += result.awardedPoints;
+    // Track section points (for potential rollback)
+    if (!game.sectionPoints[result.playerId]) game.sectionPoints[result.playerId] = {};
+    game.sectionPoints[result.playerId][memorySectionId] = (game.sectionPoints[result.playerId][memorySectionId] || 0) + result.awardedPoints;
+    console.log(`  ${result.name}: ${result.score} mini-game pts → +${result.awardedPoints} game pts (${getPlacementLabel(result.placement)})`);
+  });
+
+  // Star always awarded for memory match (game always completes)
+  const starEarned = true;
+
+  // Broadcast game end
+  io.to(roomCode).emit('memory-match-complete', {
+    placements,
+    finalScores: game.scores,
+    starEarned,
+  });
+
+  // Record as completed for section star calculation
+  flowCoordinator.recordSubmission('memory-match-complete', { completed: true });
+
+  // Add memory match result to sectionResults
+  game.sectionResults.push({
+    roundNumber: flowCoordinator.currentRound,
+    isCorrect: starEarned, // Always true for memory match
+    playerId: 'memory-match-game',
+    gameType: 'memory-match',
+  });
+
+  // Broadcast scores update
+  io.to(roomCode).emit('scores-updated', {
+    scores: game.scores,
+    reason: 'memory-match-complete',
+  });
+
+  // Clean up memory match state
+  memoryMatchGameStates.delete(roomCode);
+
+  // Advance to results after delay
+  setTimeout(() => {
+    gradeAndAdvance(roomCode, io);
+  }, 3000);
 }
 
 // Generate and broadcast challenge when entering CHALLENGE_ACTIVE state
@@ -482,6 +774,39 @@ function handleChallengeActive(roomCode, io, forcedGameType = null) {
 
     // Start the snake game
     startSnakeGame(roomCode, io, challenge);
+    return;
+  }
+
+  // Handle Memory Match (turn-based card matching game)
+  if (challenge.gameType === 'memory-match') {
+    console.log(`[${roomCode}] Generated Memory Match challenge for round ${flowCoordinator.currentRound}`);
+    console.log(`  Players: ${challenge.turnOrder.map(id => challenge.playerNames[id]).join(', ')}`);
+
+    // Cancel the flowCoordinator's auto-advance timer - Memory Match manages its own timing
+    setTimeout(() => {
+      if (flowCoordinator.autoAdvanceTimer) {
+        clearTimeout(flowCoordinator.autoAdvanceTimer);
+        flowCoordinator.autoAdvanceTimer = null;
+        console.log(`[${roomCode}] Cancelled auto-advance timer for Memory Match`);
+      }
+    }, 100);
+
+    // Broadcast game-state-update to all in room
+    io.to(roomCode).emit('game-state-update', {
+      state: GameState.CHALLENGE_ACTIVE,
+      round: flowCoordinator.currentRound,
+      section: flowCoordinator.currentSection
+    });
+
+    // Broadcast challenge to coordinator and players
+    io.to(roomCode).emit('challenge-started', {
+      challenge,
+      round: flowCoordinator.currentRound,
+      section: flowCoordinator.currentSection
+    });
+
+    // Start the memory match game
+    startMemoryMatchGame(roomCode, io, challenge);
     return;
   }
 
@@ -955,6 +1280,16 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle Memory Match cursor move
+  socket.on('memory-match-move', ({ roomCode, direction }) => {
+    handleMemoryMatchMove(roomCode, io, socket.id, direction);
+  });
+
+  // Handle Memory Match card selection
+  socket.on('memory-match-select', ({ roomCode }) => {
+    handleMemoryMatchSelect(roomCode, io, socket.id);
+  });
+
   // Disconnect
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
@@ -993,6 +1328,13 @@ io.on('connection', (socket) => {
           clearTimeout(connect4Timers.get(roomCode));
           connect4Timers.delete(roomCode);
         }
+
+        // Clean up memory match state
+        if (memoryMatchTurnTimers.has(roomCode)) {
+          clearTimeout(memoryMatchTurnTimers.get(roomCode));
+          memoryMatchTurnTimers.delete(roomCode);
+        }
+        memoryMatchGameStates.delete(roomCode);
 
         games.delete(roomCode);
         console.log(`Game ${roomCode} deleted - coordinator disconnected`);
@@ -1073,6 +1415,34 @@ function gradeAndAdvance(roomCode, io) {
         results: [],
         scores: game.scores,
         gameType: 'snake'
+      });
+      return;
+    }
+
+    // Transition to results display
+    flowCoordinator.transitionTo(io, 'CHALLENGE_RESULTS');
+    return;
+  }
+
+  // Handle Memory Match specially - scoring already done in endMemoryMatchGame()
+  if (challenge.gameType === 'memory-match') {
+    console.log(`[${roomCode}] Memory Match complete - skipping grading, advancing to results`);
+
+    // sectionResults already populated in endMemoryMatchGame()
+
+    // Broadcast results (empty results array since there are no individual question results)
+    io.to(roomCode).emit('challenge-results', {
+      results: [],
+      scores: game.scores
+    });
+
+    // For preview mode, don't auto-advance
+    if (game.isPreviewMode) {
+      console.log(`[${roomCode}] Preview mode - stopping at Memory Match results`);
+      io.to(roomCode).emit('preview-game-ended', {
+        results: [],
+        scores: game.scores,
+        gameType: 'memory-match'
       });
       return;
     }

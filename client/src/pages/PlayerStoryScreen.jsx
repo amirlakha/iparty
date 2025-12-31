@@ -40,6 +40,9 @@ function PlayerStoryScreen() {
   const [snakePlayerState, setSnakePlayerState] = useState(null);
   const [snakeRespawnCountdown, setSnakeRespawnCountdown] = useState(0);
 
+  // Memory Match game state
+  const [memoryMatchPlayerState, setMemoryMatchPlayerState] = useState(null);
+
   // Word Scramble state
   const [showWordScrambleHint, setShowWordScrambleHint] = useState(false);
   const [displayedScramble, setDisplayedScramble] = useState('');
@@ -199,6 +202,22 @@ function PlayerStoryScreen() {
       setSnakePlayerState(null);
     });
 
+    // Memory Match events
+    socket.on('memory-match-player-state', (data) => {
+      console.log('[PlayerStoryScreen] Memory Match player state:', data);
+      setMemoryMatchPlayerState(data);
+      setChallengeData({ gameType: 'memory-match' });
+    });
+
+    socket.on('memory-match-complete', (data) => {
+      console.log('[PlayerStoryScreen] Memory Match game ended');
+      if (data.finalScores) {
+        setMyScore(data.finalScores[socket.id] || 0);
+      }
+      // Clear memory match state
+      setMemoryMatchPlayerState(null);
+    });
+
     return () => {
       socket.off('game-state-update');
       socket.off('game-started');
@@ -211,6 +230,8 @@ function PlayerStoryScreen() {
       socket.off('snake-player-init');
       socket.off('snake-game-tick');
       socket.off('snake-game-end');
+      socket.off('memory-match-player-state');
+      socket.off('memory-match-complete');
     };
   }, [socket, roomCode]);
 
@@ -231,6 +252,42 @@ function PlayerStoryScreen() {
 
     return () => clearTimeout(timer);
   }, [challengeData, gameState]);
+
+  // Memory Match: Keyboard controls for desktop testing
+  useEffect(() => {
+    if (!socket || !roomCode) return;
+    if (challengeData?.gameType !== 'memory-match') return;
+    if (!memoryMatchPlayerState?.isYourTurn) return;
+
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          socket.emit('memory-match-move', { roomCode, direction: 'up' });
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          socket.emit('memory-match-move', { roomCode, direction: 'down' });
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          socket.emit('memory-match-move', { roomCode, direction: 'left' });
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          socket.emit('memory-match-move', { roomCode, direction: 'right' });
+          break;
+        case ' ':
+        case 'Enter':
+          e.preventDefault();
+          socket.emit('memory-match-select', { roomCode });
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [socket, roomCode, challengeData, memoryMatchPlayerState?.isYourTurn]);
 
   // Spelling Bee Phase Sync: Listen for phase changes from Coordinator (TV)
   useEffect(() => {
@@ -336,6 +393,23 @@ function PlayerStoryScreen() {
     });
   };
 
+  const handleMemoryMatchMove = (direction) => {
+    if (!socket) return;
+
+    socket.emit('memory-match-move', {
+      roomCode,
+      direction
+    });
+  };
+
+  const handleMemoryMatchSelect = () => {
+    if (!socket) return;
+
+    socket.emit('memory-match-select', {
+      roomCode
+    });
+  };
+
   if (!roomCode || !socket) {
     return (
       <div className="fixed inset-0 w-screen h-screen overflow-hidden flex items-center justify-center"
@@ -410,6 +484,91 @@ function PlayerStoryScreen() {
                       respawnCountdown={snakeRespawnCountdown}
                       isInvincible={snakePlayerState.isInvincible}
                     />
+                  ) : challengeData?.gameType === 'memory-match' && memoryMatchPlayerState ? (
+                    /* MEMORY MATCH GAME */
+                    <div className="text-center flex flex-col items-center justify-center h-full px-4">
+                      {memoryMatchPlayerState.isYourTurn ? (
+                        /* It's my turn - show controls */
+                        <>
+                          <div className="font-black text-green-400 mb-4 animate-pulse"
+                               style={{fontSize: 'clamp(1.5rem, 4vh, 3rem)', textShadow: '0 2px 10px rgba(0,0,0,0.5)'}}>
+                            YOUR TURN!
+                          </div>
+                          <div className="text-white/80 mb-4" style={{fontSize: 'clamp(0.875rem, 2vh, 1.25rem)'}}>
+                            Use arrows to move cursor, then SELECT
+                          </div>
+
+                          {/* Arrow controls */}
+                          <div className="flex flex-col items-center gap-2 mb-6">
+                            {/* Up arrow */}
+                            <button
+                              onClick={() => handleMemoryMatchMove('up')}
+                              className="w-16 h-16 bg-gradient-to-b from-purple-500 to-purple-700 rounded-xl text-white font-bold text-3xl shadow-lg active:scale-95 transition-transform"
+                            >
+                              ↑
+                            </button>
+                            {/* Left, Right arrows */}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleMemoryMatchMove('left')}
+                                className="w-16 h-16 bg-gradient-to-b from-purple-500 to-purple-700 rounded-xl text-white font-bold text-3xl shadow-lg active:scale-95 transition-transform"
+                              >
+                                ←
+                              </button>
+                              <div className="w-16 h-16"></div>
+                              <button
+                                onClick={() => handleMemoryMatchMove('right')}
+                                className="w-16 h-16 bg-gradient-to-b from-purple-500 to-purple-700 rounded-xl text-white font-bold text-3xl shadow-lg active:scale-95 transition-transform"
+                              >
+                                →
+                              </button>
+                            </div>
+                            {/* Down arrow */}
+                            <button
+                              onClick={() => handleMemoryMatchMove('down')}
+                              className="w-16 h-16 bg-gradient-to-b from-purple-500 to-purple-700 rounded-xl text-white font-bold text-3xl shadow-lg active:scale-95 transition-transform"
+                            >
+                              ↓
+                            </button>
+                          </div>
+
+                          {/* SELECT button */}
+                          <button
+                            onClick={handleMemoryMatchSelect}
+                            className="w-48 py-4 bg-gradient-to-b from-green-500 to-green-700 rounded-xl text-white font-black text-2xl shadow-lg active:scale-95 transition-transform"
+                          >
+                            SELECT
+                          </button>
+
+                          {/* Score */}
+                          <div className="mt-4 text-white/80" style={{fontSize: 'clamp(0.875rem, 2vh, 1.25rem)'}}>
+                            Your score: {memoryMatchPlayerState.yourScore} pts
+                          </div>
+                        </>
+                      ) : (
+                        /* Waiting for other player */
+                        <>
+                          <div className="font-bold text-yellow-300 mb-4"
+                               style={{fontSize: 'clamp(1.25rem, 3vh, 2rem)', textShadow: '0 2px 10px rgba(0,0,0,0.5)'}}>
+                            {memoryMatchPlayerState.currentPlayerName}'s turn...
+                          </div>
+                          <div className="text-white/80 mb-6" style={{fontSize: 'clamp(1rem, 2vh, 1.5rem)'}}>
+                            Watch the TV screen
+                          </div>
+                          <div className="bg-white/10 rounded-xl p-4">
+                            <div className="text-white/60" style={{fontSize: 'clamp(0.875rem, 1.5vh, 1rem)'}}>
+                              Pairs found
+                            </div>
+                            <div className="text-white font-bold" style={{fontSize: 'clamp(1.5rem, 3vh, 2rem)'}}>
+                              {memoryMatchPlayerState.pairsFound} / {memoryMatchPlayerState.totalPairs}
+                            </div>
+                          </div>
+                          <div className="mt-4 text-white/80" style={{fontSize: 'clamp(0.875rem, 2vh, 1.25rem)'}}>
+                            Your score: {memoryMatchPlayerState.yourScore} pts
+                          </div>
+                        </>
+                      )}
+                    </div>
                   ) : challengeData?.gameType === 'connect4' ? (
                   /* CONNECT 4 GAME */
                     <div className="text-center">
